@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* High-contrast and low-light transitions */
+html {
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
+}

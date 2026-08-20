@@ -1,0 +1,6 @@
+{
+  "name": "Helps NGO",
+  "description": "HELPS Welfare Society (Health, Education, Liberty, Peace, and Service) - Registered under Society Registration Act XXI of 1860 (Est. 2016). Empowering communities across Punjab and India.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
