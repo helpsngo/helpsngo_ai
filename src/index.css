@@ -10,3 +10,61 @@ html {
 html.dark {
   color-scheme: dark;
 }
+
+/* ==========================================================================
+   Google Translate Seamless Headless Integration
+   Hides default Google Translate top banner, tooltips, and gadget dropdown
+   while allowing programmatic translation across the entire DOM tree.
+   ========================================================================== */
+
+/* Prevent Google Translate from adding a 40px top displacement bar to the body */
+body {
+  top: 0px !important;
+  position: static !important;
+}
+
+/* Hide default Google Translate banner frame / top toolbar */
+.goog-te-banner-frame,
+.goog-te-banner-frame.skiptranslate,
+iframe.goog-te-banner-frame,
+.goog-te-banner,
+#goog-gt-tt,
+.goog-te-balloon-frame,
+.goog-tooltip,
+.goog-tooltip:hover {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0px !important;
+  width: 0px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Remove default Google highlight styling on hovered/translated text */
+.goog-text-highlight {
+  background-color: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  text-decoration: none !important;
+}
+
+/* Hide Google attribution popups and voting tooltips */
+#goog-gt-voting,
+#goog-gt-tt,
+.goog-te-gadget-simple,
+.goog-te-gadget-icon {
+  display: none !important;
+}
+
+/* Hide the raw Google Translate DOM element container */
+#google_translate_element {
+  position: absolute !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0.01 !important;
+  pointer-events: auto !important;
+  z-index: -9999 !important;
+  overflow: hidden !important;
+}

@@ -241,11 +241,12 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
   const onUpdateAssignment = propOnUpdateAssignment || propOnUpdateTask || (() => {});
   const onDeleteAssignment = propOnDeleteAssignment || propOnDeleteTask;
 
-  const isApplicant = currentUser?.role === 'volunteer_applicant' || currentUser?.volunteerApplicationStatus === 'pending_review';
-  const isVolunteer = (currentUser?.role === 'volunteer') && !isApplicant;
+  const isPendingReview = currentUser?.volunteerApplicationStatus === 'pending_review' || currentUser?.role === 'volunteer_applicant';
+  const isApplicant = currentUser?.role === 'volunteer_applicant' || isPendingReview;
+  const isVolunteer = (currentUser?.role === 'volunteer') && !isApplicant && !isPendingReview;
   const isAdmin = currentUser?.role === 'admin' || currentUser?.role === 'super_admin';
   const isManagement = currentUser?.role === 'management' || currentUser?.role === 'program_manager';
-  const canAssign = (isAdmin || isManagement) && !isApplicant;
+  const canAssign = (isAdmin || isManagement) && !isApplicant && !isPendingReview;
 
   // View state
   const [activeView, setActiveView] = useState<'list' | 'create' | 'edit'>('list');
@@ -307,6 +308,11 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
   const availableMembers = targetType === 'management' ? TEAM_MANAGEMENT_ROSTER : TEAM_VOLUNTEER_ROSTER;
 
   const handleApplyTemplate = (template: typeof TASK_TEMPLATES[0]) => {
+    if (isPendingReview || isApplicant || (!isAdmin && !isManagement)) {
+      setSuccessToast(`Access Restricted: Application Pending. Task template dispatching is locked.`);
+      setTimeout(() => setSuccessToast(null), 3000);
+      return;
+    }
     setTaskTitle(template.title);
     setTaskDesc(template.description);
     setTaskCategory(template.category);
@@ -323,6 +329,7 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
   };
 
   const handleAddChecklistItem = () => {
+    if (isPendingReview || isApplicant) return;
     if (!newChecklistText.trim()) return;
     setChecklistItems([
       ...checklistItems,
@@ -332,10 +339,16 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
   };
 
   const handleRemoveChecklistItem = (id: string) => {
+    if (isPendingReview || isApplicant) return;
     setChecklistItems(checklistItems.filter(item => item.id !== id));
   };
 
   const handleStartEdit = (task: WorkAssignment) => {
+    if (isPendingReview || isApplicant || (!isAdmin && !isManagement)) {
+      setSuccessToast(`Access Restricted: Application Pending. Task editing is locked.`);
+      setTimeout(() => setSuccessToast(null), 3000);
+      return;
+    }
     setEditingTaskId(task.id);
     setTaskTitle(task.title);
     setTaskDesc(task.description);
@@ -364,6 +377,11 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
 
   const handleCreateOrUpdateAssignmentSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isPendingReview || isApplicant || (!isAdmin && !isManagement)) {
+      setSuccessToast(`Access Restricted: Application Pending. Task creation and editing are locked.`);
+      setTimeout(() => setSuccessToast(null), 3000);
+      return;
+    }
     if (!taskTitle.trim()) return;
 
     let assigneeName = '';
@@ -480,8 +498,8 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
 
   // Toggle checklist item
   const handleToggleChecklist = (task: WorkAssignment, checkId: string) => {
-    if (isApplicant) {
-      setSuccessToast(`Authorization Restriction: Volunteer applicants cannot modify field task deliverables until Trustee verification is completed.`);
+    if (isApplicant || isPendingReview || (currentUser?.role !== 'volunteer' && !isAdmin && !isManagement)) {
+      setSuccessToast(`Access Restricted: Application Pending. Volunteer applicants cannot modify field task deliverables until Trustee verification is completed.`);
       setTimeout(() => setSuccessToast(null), 3000);
       return;
     }
@@ -529,8 +547,8 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
 
   // Quick Status Transition Handler
   const handleStatusChange = (task: WorkAssignment, newStatus: TaskStatus) => {
-    if (isApplicant) {
-      setSuccessToast(`Authorization Restriction: Task status changes are locked for pending volunteer applicants.`);
+    if (isApplicant || isPendingReview || (currentUser?.role !== 'volunteer' && !isAdmin && !isManagement)) {
+      setSuccessToast(`Access Restricted: Application Pending. Task status changes are locked for pending volunteer applicants.`);
       setTimeout(() => setSuccessToast(null), 3000);
       return;
     }
@@ -581,8 +599,8 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
     e.preventDefault();
     if (!completingTask) return;
 
-    if (isApplicant) {
-      setSuccessToast(`Authorization Restriction: Volunteer applicants cannot submit task completions.`);
+    if (isApplicant || isPendingReview || (currentUser?.role !== 'volunteer' && !isAdmin && !isManagement)) {
+      setSuccessToast(`Access Restricted: Application Pending. Volunteer applicants cannot submit task completions.`);
       setTimeout(() => setSuccessToast(null), 3000);
       return;
     }
@@ -859,46 +877,48 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
             <OfflineSyncBadge onClick={() => setIsOfflineSyncModalOpen(true)} />
 
             {/* Role Profile Perspective Switcher */}
-            <div className="hidden md:flex items-center bg-white/10 p-0.5 rounded-full border border-white/15 text-[10px] font-bold">
-              <button
-                type="button"
-                onClick={() => setRolePerspective('management')}
-                className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-                  effectiveRole === 'admin' || effectiveRole === 'management'
-                    ? 'bg-purple-600 text-white shadow-xs'
-                    : 'text-zinc-300 hover:text-white'
-                }`}
-                title="View from Management & Trustee perspective"
-              >
-                👔 Mgmt
-              </button>
-              <button
-                type="button"
-                onClick={() => setRolePerspective('volunteer')}
-                className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-                  effectiveRole === 'volunteer'
-                    ? 'bg-blue-600 text-white shadow-xs'
-                    : 'text-zinc-300 hover:text-white'
-                }`}
-                title="View from Field Volunteer perspective"
-              >
-                🤝 Volunteer
-              </button>
-              <button
-                type="button"
-                onClick={() => setRolePerspective('donor')}
-                className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-                  effectiveRole === 'donor'
-                    ? 'bg-emerald-600 text-white shadow-xs'
-                    : 'text-zinc-300 hover:text-white'
-                }`}
-                title="View from Donor Impact transparency perspective"
-              >
-                💖 Donor
-              </button>
-            </div>
+            {!isApplicant && !isPendingReview && (
+              <div className="hidden md:flex items-center bg-white/10 p-0.5 rounded-full border border-white/15 text-[10px] font-bold">
+                <button
+                  type="button"
+                  onClick={() => setRolePerspective('management')}
+                  className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                    effectiveRole === 'admin' || effectiveRole === 'management'
+                      ? 'bg-purple-600 text-white shadow-xs'
+                      : 'text-zinc-300 hover:text-white'
+                  }`}
+                  title="View from Management & Trustee perspective"
+                >
+                  👔 Mgmt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRolePerspective('volunteer')}
+                  className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                    effectiveRole === 'volunteer'
+                      ? 'bg-blue-600 text-white shadow-xs'
+                      : 'text-zinc-300 hover:text-white'
+                  }`}
+                  title="View from Field Volunteer perspective"
+                >
+                  🤝 Volunteer
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setRolePerspective('donor')}
+                  className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                    effectiveRole === 'donor'
+                      ? 'bg-emerald-600 text-white shadow-xs'
+                      : 'text-zinc-300 hover:text-white'
+                  }`}
+                  title="View from Donor Impact transparency perspective"
+                >
+                  💖 Donor
+                </button>
+              </div>
+            )}
 
-            {canAssign && (
+            {canAssign && !isApplicant && !isPendingReview && (
               <button
                 type="button"
                 id="tab-toggle-create-assignment"
@@ -952,64 +972,37 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
         {/* Modal Body */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
           
-          {/* APPLICANT ACCESS GATE: Locked Until Trustee Board Verification */}
-          {isApplicant ? (
-            <div className="max-w-2xl mx-auto py-8 px-4 text-center space-y-6 animate-fadeIn">
-              <div className="w-16 h-16 rounded-2xl bg-amber-100 border-2 border-amber-300 text-amber-700 flex items-center justify-center mx-auto shadow-xs">
-                <ShieldAlert className="w-8 h-8" />
-              </div>
-
-              <div className="space-y-2">
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100 border border-amber-300 text-[11px] font-black text-amber-900 uppercase tracking-wider">
-                  <Clock className="w-3.5 h-3.5" />
-                  <span>Statutory Trustee Review In Progress</span>
+          {/* APPLICANT ACCESS NOTICE BANNER */}
+          {(isApplicant || isPendingReview) && (
+            <div className="bg-amber-50 border border-amber-300 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fadeIn shadow-xs">
+              <div className="flex items-start gap-3.5">
+                <div className="w-11 h-11 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                  <ShieldAlert className="w-6 h-6 text-amber-700" />
                 </div>
-                <h3 className="text-xl font-black text-gray-900">
-                  Task Command Center Locked
-                </h3>
-                <p className="text-sm text-gray-600 max-w-lg mx-auto leading-relaxed">
-                  Your volunteer profile for <strong>{currentUser?.name}</strong> ({currentUser?.email}) is pending statutory compliance verification by the Board of Trustees. Field tasks cannot be modified or marked complete until your profile is authorized.
-                </p>
-              </div>
-
-              <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-left space-y-3 max-w-lg mx-auto shadow-2xs">
-                <h4 className="text-xs font-black uppercase tracking-wider text-gray-700">
-                  Applicant Verification Status
-                </h4>
-                <div className="grid grid-cols-2 gap-3 text-xs">
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Applicant</span>
-                    <span className="font-bold text-gray-900">{currentUser?.name}</span>
+                <div className="space-y-1">
+                  <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-200/80 text-[10px] font-black text-amber-950 uppercase tracking-wider">
+                    <Clock className="w-3 h-3 text-amber-800" />
+                    <span>Statutory Trustee Review In Progress</span>
                   </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Designated Role</span>
-                    <span className="font-bold text-amber-700">Volunteer Applicant</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Trustee Queue</span>
-                    <span className="font-bold text-amber-600">Pending Background Check</span>
-                  </div>
-                  <div>
-                    <span className="text-gray-400 block text-[10px] uppercase font-bold">Field Directives</span>
-                    <span className="font-bold text-gray-500">0 Tasks (Restricted)</span>
-                  </div>
+                  <h3 className="text-sm sm:text-base font-black text-gray-900">
+                    Access Restricted: Application Pending
+                  </h3>
+                  <p className="text-xs text-amber-900/90 leading-relaxed max-w-2xl">
+                    Your volunteer profile for <strong>{currentUser?.name || 'Applicant'}</strong> ({currentUser?.email}) is pending review. Task management, assignment dispatching, checklist deliverables, and completion submissions are locked until Trustee verification is completed.
+                  </p>
                 </div>
               </div>
-
-              <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="bg-gray-900 hover:bg-black text-white font-bold text-xs uppercase tracking-wider px-6 py-2.5 rounded-full shadow-xs active:scale-95 transition-all cursor-pointer"
-                >
-                  Close Command Center
-                </button>
+              <div className="flex-shrink-0 text-right sm:border-l sm:border-amber-200 sm:pl-4">
+                <span className="text-[10px] uppercase font-bold text-amber-700 block">Status</span>
+                <span className="text-xs font-black text-amber-900 bg-amber-200/60 px-2 py-0.5 rounded-md inline-block mt-0.5">
+                  ⏳ Pending Review
+                </span>
               </div>
             </div>
-          ) : (
-            <>
-              {/* VIEW 1: CREATE / EDIT WORK FORM */}
-              {(activeView === 'create' || activeView === 'edit') && canAssign && (
+          )}
+
+          {/* VIEW 1: CREATE / EDIT WORK FORM */}
+          {(activeView === 'create' || activeView === 'edit') && canAssign && !isApplicant && !isPendingReview && (
             <div className="animate-fadeIn max-w-3xl mx-auto space-y-5">
               {/* Preset Template Dispatcher */}
               <div className="bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200 rounded-2xl p-4 space-y-2.5">
@@ -1580,11 +1573,63 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
               ) : (
                 <div className="grid grid-cols-1 gap-3.5">
                   {filteredAssignments.map((task) => {
+                    // Visual Guard: If profile status is 'pending_review' or role is applicant, display 'Application Pending' notification instead of task details
+                    if (isApplicant || isPendingReview || currentUser?.volunteerApplicationStatus === 'pending_review') {
+                      return (
+                        <div
+                          key={task.id}
+                          id={`task-card-pending-${task.id}`}
+                          className="rounded-2xl p-4 sm:p-5 border border-amber-300 bg-gradient-to-br from-amber-50 to-orange-50/40 shadow-xs space-y-3 transition-all animate-fadeIn"
+                        >
+                          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-amber-200/80 pb-2.5">
+                            <div className="flex items-center gap-2">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-200/90 text-amber-950 border border-amber-300 shadow-2xs">
+                                <Clock className="w-3 h-3 text-amber-800 animate-spin" />
+                                Application Pending
+                              </span>
+                              <span className="text-[11px] font-mono font-bold text-gray-500">#{task.id}</span>
+                            </div>
+                            <span className="text-[11px] font-bold text-amber-900 bg-white/90 border border-amber-300 px-2.5 py-0.5 rounded-md flex items-center gap-1 shadow-2xs">
+                              <ShieldAlert className="w-3.5 h-3.5 text-amber-600" />
+                              Statutory Review Required
+                            </span>
+                          </div>
+
+                          <div className="flex items-start gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center flex-shrink-0 shadow-2xs">
+                              <Lock className="w-5 h-5 text-amber-700" />
+                            </div>
+                            <div className="space-y-1 min-w-0 flex-1">
+                              <h4 className="text-sm font-black text-gray-900">
+                                Application Pending — Task Directive Details Protected
+                              </h4>
+                              <p className="text-xs text-amber-900 leading-relaxed">
+                                Task details, deliverable checklists, and completion verification are hidden while your volunteer profile for <strong>{currentUser?.name || 'Applicant'}</strong> is under <strong>pending_review</strong>. State mutations and field completions are disabled until Trustee verification is complete.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="pt-2 border-t border-amber-200/80 flex flex-wrap items-center justify-between gap-2 text-xs">
+                            <div className="flex items-center gap-2 text-amber-900 text-[11px]">
+                              <span className="font-semibold">Volunteer Profile Status:</span>
+                              <span className="font-bold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded">
+                                ⏳ Pending Review
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-[11px] font-black text-red-600 bg-red-50 border border-red-200 px-2.5 py-0.5 rounded-full">
+                              <Lock className="w-3 h-3" />
+                              <span>Interactions Blocked</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
                     const userEmail = (currentUser?.email || '').toLowerCase();
                     const userName = (currentUser?.name || '').toLowerCase();
                     const isAssignedToCurrent = (task.assignedTo?.email || '').toLowerCase() === userEmail || (task.assignedTo?.name || '').toLowerCase() === userName;
                     const isAssignedByCurrent = (task.assignedBy?.email || '').toLowerCase() === userEmail || (task.assignedBy?.name || '').toLowerCase() === userName;
-                    const canModifyThisTask = (isAdmin || isManagement || isAssignedToCurrent) && !isApplicant;
+                    const canModifyThisTask = (isAdmin || isManagement || isAssignedToCurrent) && !isApplicant && !isPendingReview;
                     const completedChecklistCount = task.checklist ? task.checklist.filter(c => c.completed).length : 0;
                     const totalChecklistCount = task.checklist ? task.checklist.length : 0;
                     const isCompleted = task.status === 'completed';
@@ -1885,9 +1930,7 @@ export const WorkAssignmentModal: React.FC<WorkAssignmentModalProps> = ({
               )}
             </div>
           )}
-        </>
-      )}
-    </div>
+        </div>
 
         {/* Modal Footer */}
         <div className="p-3.5 sm:p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between text-xs text-gray-600">

@@ -543,7 +543,10 @@ export interface FieldDispatch {
   iconType: 'classroom' | 'clinic' | 'water' | 'food' | 'general';
 }
 
-export type SupportedLanguage = 'en' | 'hi' | 'mr' | 'bn' | 'ta' | 'gu';
+export type SupportedLanguage = 
+  | 'en' | 'hi' | 'bn' | 'ur' | 'ta' | 'te' | 'mr' | 'gu' 
+  | 'pa' | 'ml' | 'kn' | 'or' | 'as' | 'sa' | 'ne' 
+  | 'es' | 'fr' | 'ar' | 'de' | string;
 
 export interface LanguageOption {
   code: SupportedLanguage;
@@ -551,6 +554,7 @@ export interface LanguageOption {
   nativeName: string;
   region: string;
   flagEmoji: string;
+  category?: 'indian' | 'global';
 }
 
 export type WebhookEventType = 

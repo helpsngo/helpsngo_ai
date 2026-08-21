@@ -69,8 +69,8 @@ class AuthService {
           this.clearSessionStorage();
         }
       }
-    } catch (e) {
-      console.warn('Failed to load session from storage:', e);
+    } catch {
+      // safe fallback on corrupted storage
     }
     this.activeSessionUser = GUEST_USER;
   }
@@ -84,8 +84,8 @@ class AuthService {
           lastActivity: Date.now()
         };
         localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(sessionData));
-      } catch (e) {
-        console.warn('Failed to save session activity:', e);
+      } catch {
+        // quiet fail on storage quota
       }
     }
   }
@@ -111,8 +111,8 @@ class AuthService {
   private clearSessionStorage(): void {
     try {
       localStorage.removeItem(STORAGE_SESSION_KEY);
-    } catch (e) {
-      console.warn('Failed to clear session storage:', e);
+    } catch {
+      // ignore
     }
   }
 
@@ -141,8 +141,7 @@ class AuthService {
       }
 
       return Array.from(accountMap.values());
-    } catch (e) {
-      console.warn('Failed to parse registered accounts:', e);
+    } catch {
       return SEEDED_ACCOUNTS;
     }
   }
@@ -155,8 +154,8 @@ class AuthService {
       const filtered = existing.filter(a => a.email.toLowerCase() !== newCred.email.toLowerCase());
       const updated = [newCred, ...filtered];
       localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated));
-    } catch (e) {
-      console.error('Failed to save account:', e);
+    } catch {
+      // safe fallback
     }
   }
 
@@ -180,8 +179,8 @@ class AuthService {
           lastActivity: Date.now()
         };
         localStorage.setItem(STORAGE_SESSION_KEY, JSON.stringify(sessionData));
-      } catch (e) {
-        console.warn('Failed to persist active session:', e);
+      } catch {
+        // safe fallback
       }
     } else {
       this.clearSessionStorage();

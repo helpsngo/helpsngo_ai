@@ -208,7 +208,6 @@ export function assertPermission(
   if (!hasPermission(user, permission)) {
     const role = user?.role || 'guest';
     const msg = `403 Forbidden: Role '${role}' lacks required permission '${permission}' to execute ${actionDesc || 'action'}.`;
-    console.error(msg);
     throw new Error(msg);
   }
 }

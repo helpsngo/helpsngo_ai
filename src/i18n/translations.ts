@@ -6,42 +6,152 @@ export const SUPPORTED_LANGUAGES: LanguageOption[] = [
     name: 'English',
     nativeName: 'English',
     region: 'Global / India',
-    flagEmoji: '🌐'
+    flagEmoji: '🌐',
+    category: 'global'
   },
   {
     code: 'hi',
     name: 'Hindi',
     nativeName: 'हिन्दी',
     region: 'North & Central India',
-    flagEmoji: '🇮🇳'
-  },
-  {
-    code: 'mr',
-    name: 'Marathi',
-    nativeName: 'मराठी',
-    region: 'Maharashtra & Western India',
-    flagEmoji: '🚩'
+    flagEmoji: '🇮🇳',
+    category: 'indian'
   },
   {
     code: 'bn',
     name: 'Bengali',
     nativeName: 'বাংলা',
     region: 'West Bengal & East India',
-    flagEmoji: '🌾'
+    flagEmoji: '🌾',
+    category: 'indian'
+  },
+  {
+    code: 'ur',
+    name: 'Urdu',
+    nativeName: 'اردو',
+    region: 'Jammu & Kashmir / All India',
+    flagEmoji: '🌙',
+    category: 'indian'
   },
   {
     code: 'ta',
     name: 'Tamil',
     nativeName: 'தமிழ்',
     region: 'Tamil Nadu & South India',
-    flagEmoji: '🪔'
+    flagEmoji: '🪔',
+    category: 'indian'
+  },
+  {
+    code: 'te',
+    name: 'Telugu',
+    nativeName: 'తెలుగు',
+    region: 'Andhra & Telangana',
+    flagEmoji: '🏵️',
+    category: 'indian'
+  },
+  {
+    code: 'mr',
+    name: 'Marathi',
+    nativeName: 'मराठी',
+    region: 'Maharashtra & Western India',
+    flagEmoji: '🚩',
+    category: 'indian'
   },
   {
     code: 'gu',
     name: 'Gujarati',
     nativeName: 'ગુજરાતી',
     region: 'Gujarat & Western India',
-    flagEmoji: '🦁'
+    flagEmoji: '🦁',
+    category: 'indian'
+  },
+  {
+    code: 'pa',
+    name: 'Punjabi',
+    nativeName: 'ਪੰਜਾਬੀ',
+    region: 'Punjab & North India',
+    flagEmoji: 'ੴ',
+    category: 'indian'
+  },
+  {
+    code: 'ml',
+    name: 'Malayalam',
+    nativeName: 'മലയാളം',
+    region: 'Kerala & South India',
+    flagEmoji: '🌴',
+    category: 'indian'
+  },
+  {
+    code: 'kn',
+    name: 'Kannada',
+    nativeName: 'ಕನ್ನಡ',
+    region: 'Karnataka & South India',
+    flagEmoji: '🐘',
+    category: 'indian'
+  },
+  {
+    code: 'or',
+    name: 'Odia',
+    nativeName: 'ଓଡ଼ିଆ',
+    region: 'Odisha & East India',
+    flagEmoji: '🌊',
+    category: 'indian'
+  },
+  {
+    code: 'as',
+    name: 'Assamese',
+    nativeName: 'অসমীয়া',
+    region: 'Assam & Northeast India',
+    flagEmoji: '🦏',
+    category: 'indian'
+  },
+  {
+    code: 'sa',
+    name: 'Sanskrit',
+    nativeName: 'संस्कृतम्',
+    region: 'Classical Language',
+    flagEmoji: '🕉️',
+    category: 'indian'
+  },
+  {
+    code: 'ne',
+    name: 'Nepali',
+    nativeName: 'नेपाली',
+    region: 'Sikkim & Himalayan Region',
+    flagEmoji: '🏔️',
+    category: 'indian'
+  },
+  {
+    code: 'es',
+    name: 'Spanish',
+    nativeName: 'Español',
+    region: 'Spain & Americas',
+    flagEmoji: '🇪🇸',
+    category: 'global'
+  },
+  {
+    code: 'fr',
+    name: 'French',
+    nativeName: 'Français',
+    region: 'France & Francophonie',
+    flagEmoji: '🇫🇷',
+    category: 'global'
+  },
+  {
+    code: 'ar',
+    name: 'Arabic',
+    nativeName: 'العربية',
+    region: 'Middle East & Global',
+    flagEmoji: '🇸🇦',
+    category: 'global'
+  },
+  {
+    code: 'de',
+    name: 'German',
+    nativeName: 'Deutsch',
+    region: 'Germany & Europe',
+    flagEmoji: '🇩🇪',
+    category: 'global'
   }
 ];
 

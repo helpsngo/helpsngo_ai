@@ -53,10 +53,26 @@ export interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  // Always strictly initialize in Guest mode on clean load/refresh
-  const [user, setUser] = useState<UserProfile>(() => authService.getActiveSession() || GUEST_USER);
+export const AuthProvider: React.FC<{ 
+  children: ReactNode;
+  currentUser?: UserProfile;
+  onUserChange?: (user: UserProfile) => void;
+}> = ({ children, currentUser, onUserChange }) => {
+  // Initialize in Guest mode or with active session
+  const [user, setUser] = useState<UserProfile>(() => currentUser || authService.getActiveSession() || GUEST_USER);
   
+  // Sync state when currentUser prop changes
+  useEffect(() => {
+    if (currentUser) {
+      setUser(currentUser);
+      setPipelineState({
+        stage: currentUser.role === 'guest' ? 'guest_unauthenticated' : 'dashboard_active',
+        authMethod: (currentUser.authProvider as any) || (currentUser.role === 'guest' ? 'guest' : 'email'),
+        verifiedAt: currentUser.role === 'guest' ? undefined : new Date().toISOString()
+      });
+    }
+  }, [currentUser]);
+
   const [pipelineState, setPipelineState] = useState<AuthPipelineState>(() => ({
     stage: user.role === 'guest' ? 'guest_unauthenticated' : 'dashboard_active',
     authMethod: (user.authProvider as any) || 'guest',
@@ -86,6 +102,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const result = authService.verifyWhatsAppOtp(phone, otp);
     if (result.success && result.user) {
       setUser(result.user);
+      onUserChange?.(result.user);
       setPipelineState({
         stage: 'dashboard_active',
         authMethod: 'otp',
@@ -111,6 +128,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const result = authService.signInWithEmailPassword(email, password);
     if (result.success && result.user) {
       setUser(result.user);
+      onUserChange?.(result.user);
       setPipelineState({
         stage: 'dashboard_active',
         authMethod: 'email',
@@ -136,6 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const result = authService.registerWithEmailPassword(payload);
     if (result.success && result.user) {
       setUser(result.user);
+      onUserChange?.(result.user);
       setPipelineState({
         stage: 'dashboard_active',
         authMethod: 'email',
@@ -150,11 +169,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const logout = useCallback(() => {
     authService.signOut(user);
     setUser(GUEST_USER);
+    onUserChange?.(GUEST_USER);
     setPipelineState({
       stage: 'guest_unauthenticated',
       authMethod: 'guest'
     });
-  }, [user]);
+  }, [user, onUserChange]);
 
   // Track user activity and auto logout after 10 minutes of inactivity
   useEffect(() => {
@@ -174,7 +194,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Check periodically every 15 seconds for inactivity timeout (> 10 minutes)
     const intervalId = setInterval(() => {
       if (authService.isSessionExpired()) {
-        console.warn('Session expired due to 10 minutes of inactivity. Logging out...');
         logout();
       }
     }, 15000);
@@ -189,6 +208,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const setUserSession = (updatedUser: UserProfile) => {
     setUser(updatedUser);
+    onUserChange?.(updatedUser);
     authService.saveActiveSession(updatedUser);
     if (updatedUser.role === 'guest') {
       setPipelineState({

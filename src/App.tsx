@@ -1,9 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { TabType, Project, DonationRecord, UserProfile, VolunteerFormData, OrgStats, ImpactStory, FieldDispatch, WorkAssignment } from './types';
 import { 
-  ADMIN_USER, 
-  INITIAL_USER, 
-  VOLUNTEER_USER,
+  TabType, 
+  Project, 
+  DonationRecord, 
+  UserProfile, 
+  VolunteerFormData, 
+  OrgStats, 
+  ImpactStory, 
+  FieldDispatch, 
+  WorkAssignment,
+  ContentSubmissionItem
+} from './types';
+import { 
   GUEST_USER, 
   INITIAL_PROJECTS, 
   INITIAL_DONATIONS, 
@@ -43,13 +51,12 @@ import { AdminUserManagementModal } from './components/AdminUserManagementModal'
 import { AboutOrganizationModal } from './components/AboutOrganizationModal';
 import { AppreciationLetterModal } from './components/AppreciationLetterModal';
 import { HierarchyConnectionModal } from './components/HierarchyConnectionModal';
-import { AuthGuard, AuthPipelineVisualizer } from './components/AuthGuard';
+import { AuthPipelineVisualizer } from './components/AuthGuard';
 import { LegalPoliciesModal } from './components/LegalPoliciesModal';
 import { DirectUrlSecuritySimulator } from './components/DirectUrlSecuritySimulator';
 import { AuthProvider } from './context/AuthContext';
-import { ContentSubmissionItem, IssuedCertificate } from './types';
 import { authService } from './services/authService';
-import { isRouteAuthorized, submitVolunteerApplication } from './services/rbacService';
+import { submitVolunteerApplication } from './services/rbacService';
 
 const WORK_ASSIGNMENTS_STORAGE_KEY = 'helps_ngo_work_assignments_v1';
 
@@ -153,8 +160,9 @@ export default function App() {
 
   const isAdmin = user.role === 'admin' || user.role === 'super_admin';
   const isManagement = user.role === 'management' || user.role === 'program_manager';
-  const isApplicant = user.role === 'volunteer_applicant' || user.volunteerApplicationStatus === 'pending_review';
-  const isVolunteer = (user.role === 'volunteer') && !isApplicant;
+  const isPendingReview = user.volunteerApplicationStatus === 'pending_review';
+  const isApplicant = user.role === 'volunteer_applicant' || isPendingReview;
+  const isVolunteer = (user.role === 'volunteer') && !isApplicant && !isPendingReview;
   const isStaff = isAdmin || isManagement;
   const pendingApprovalsCount = donations.filter(d => !d.approvalStatus || d.approvalStatus === 'pending').length;
   const pendingTasksCount = isStaff
@@ -201,38 +209,10 @@ export default function App() {
     }
   };
 
-  // User Activity Tracking & 10-Minute Inactivity Auto-Logout
-  useEffect(() => {
-    if (user.role === 'guest') return;
-
-    const handleUserActivity = () => {
-      authService.touchActivity();
-    };
-
-    const activityEvents = ['mousedown', 'keydown', 'touchstart', 'scroll', 'click'];
-    activityEvents.forEach((evt) => {
-      window.addEventListener(evt, handleUserActivity, { passive: true });
-    });
-
-    // Check periodically for session expiration (>10 minutes inactive)
-    const intervalId = setInterval(() => {
-      if (authService.isSessionExpired()) {
-        console.warn('Session expired after 10 minutes of inactivity. Logging out...');
-        handleLogout();
-      }
-    }, 15000);
-
-    return () => {
-      activityEvents.forEach((evt) => {
-        window.removeEventListener(evt, handleUserActivity);
-      });
-      clearInterval(intervalId);
-    };
-  }, [user.role, user.email]);
-
   // Volunteer Task Deadline Check via Web Notification API (Alerts when due within 24 hours)
   useEffect(() => {
     if (!workAssignments || workAssignments.length === 0) return;
+    if (user.role !== 'volunteer' || user.role === 'volunteer_applicant' || user.volunteerApplicationStatus === 'pending_review') return;
 
     const notifiedStorageKey = 'helps_ngo_alerted_deadlines';
     let alertedIds: string[] = [];
@@ -280,8 +260,8 @@ export default function App() {
             });
           }
           alertedIds.push(task.id);
-        } catch (err) {
-          console.warn('Notification API alert error:', err);
+        } catch {
+          // notification dispatch handled safely
         }
       });
 
@@ -304,9 +284,12 @@ export default function App() {
           .catch(() => {});
       }
     }
-  }, [workAssignments, user.email, user.role]);
+  }, [workAssignments, user.email, user.role, user.volunteerApplicationStatus]);
 
   const handleAddWorkAssignment = (newAssignment: WorkAssignment) => {
+    if (user.role === 'volunteer_applicant' || user.volunteerApplicationStatus === 'pending_review' || (!isAdmin && !isManagement)) {
+      return;
+    }
     setWorkAssignments((prev) => {
       const updated = [newAssignment, ...prev];
       localStorage.setItem(WORK_ASSIGNMENTS_STORAGE_KEY, JSON.stringify(updated));
@@ -315,6 +298,10 @@ export default function App() {
   };
 
   const handleUpdateWorkAssignment = (updatedAssignment: WorkAssignment) => {
+    // Verify user role is active volunteer (and not volunteer_applicant / pending_review) or admin/management
+    if (user.role === 'volunteer_applicant' || user.volunteerApplicationStatus === 'pending_review' || (user.role !== 'volunteer' && !isAdmin && !isManagement)) {
+      return;
+    }
     setWorkAssignments((prev) => {
       const updated = prev.map((t) => (t.id === updatedAssignment.id ? updatedAssignment : t));
       localStorage.setItem(WORK_ASSIGNMENTS_STORAGE_KEY, JSON.stringify(updated));
@@ -323,6 +310,7 @@ export default function App() {
   };
 
   const handleDeleteWorkAssignment = (taskId: string) => {
+    if (!isAdmin && !isManagement) return;
     setWorkAssignments((prev) => {
       const updated = prev.filter((t) => t.id !== taskId);
       localStorage.setItem(WORK_ASSIGNMENTS_STORAGE_KEY, JSON.stringify(updated));
@@ -415,7 +403,10 @@ export default function App() {
     });
   };
 
-  const handleLogVolunteerHours = (hours: number, activity: string) => {
+  const handleLogVolunteerHours = (hours: number, _activity: string) => {
+    if (user.role === 'volunteer_applicant' || user.volunteerApplicationStatus === 'pending_review') {
+      return;
+    }
     setUser((prev) => {
       const newHours = prev.volunteerHours + hours;
       const updated: UserProfile = {
@@ -455,7 +446,7 @@ export default function App() {
             ...d,
             approvalStatus: 'approved',
             approvedAt: nowStr,
-            approvedBy: user.name || 'Amarjeet Kumar (Trustee & Director)',
+            approvedBy: user.name || 'Amarjeet Kumar (Trustee & National Director)',
             rejectionReason: undefined
           };
         }
@@ -468,7 +459,7 @@ export default function App() {
         ...prev,
         approvalStatus: 'approved',
         approvedAt: nowStr,
-        approvedBy: user.name || 'Admin Trustee Dr. Rajesh Verma',
+        approvedBy: user.name || 'Amarjeet Kumar (Trustee & National Director)',
         rejectionReason: undefined
       }) : null);
     }
@@ -574,7 +565,7 @@ export default function App() {
   };
 
   return (
-    <AuthProvider>
+    <AuthProvider currentUser={user} onUserChange={handleSetUser}>
       <DeviceFrame>
         {/* Security & Role Authorization Pipeline Bar */}
         <AuthPipelineVisualizer onOpenAuth={() => setIsAuthOpen(true)} />

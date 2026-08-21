@@ -21,6 +21,33 @@
   </head>
   <body class="bg-[#F8F9FA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased min-h-screen transition-colors duration-150">
     <div id="root"></div>
+    <div id="google_translate_element" aria-hidden="true" style="position:absolute;top:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;opacity:0.01;"></div>
+    <script type="text/javascript">
+      // Safe error filter for benign external third-party script noise in sandboxed previews
+      window.addEventListener('error', function(e) {
+        if (e && (e.message === 'Script error.' || (typeof e.filename === 'string' && e.filename.includes('translate.google.com')))) {
+          // Suppress external cross-origin script noise
+          e.preventDefault();
+          return true;
+        }
+      }, true);
+
+      function googleTranslateElementInit() {
+        if (window.google && window.google.translate && window.google.translate.TranslateElement) {
+          try {
+            new window.google.translate.TranslateElement({
+              pageLanguage: 'en',
+              includedLanguages: 'en,hi,bn,ur,ta,te,mr,gu,pa,ml,kn,or,as,sa,ne,es,fr,ar,de',
+              autoDisplay: false
+            }, 'google_translate_element');
+            window.__googleTranslateInitialized = true;
+          } catch(e) {
+            console.warn('[GoogleTranslate] inline init error', e);
+          }
+        }
+      }
+    </script>
+    <script id="google-translate-script" type="text/javascript" src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit" async defer></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
