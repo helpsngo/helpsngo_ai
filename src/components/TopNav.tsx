@@ -1,6 +1,6 @@
 import React from 'react';
 import { TabType, UserProfile } from '../types';
-import { Home, Search, Heart, User, HeartHandshake, ShieldCheck, Briefcase, Award } from 'lucide-react';
+import { Home, Search, Heart, User, HeartHandshake, ShieldCheck, Briefcase, Award, LogIn } from 'lucide-react';
 import { useTranslation } from '../i18n/I18nContext';
 
 interface TopNavProps {
@@ -11,14 +11,18 @@ interface TopNavProps {
 
 export const TopNav: React.FC<TopNavProps> = ({ currentTab, onSelectTab, user }) => {
   const { t } = useTranslation();
-  const isAdmin = user?.role === 'admin';
-  const isManagement = user?.role === 'management';
+  const isGuest = !user || user.role === 'guest';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const isManagement = user?.role === 'management' || user?.role === 'program_manager';
   const isVolunteer = user?.role === 'volunteer';
   const isDonor = user?.role === 'donor';
 
   const getProfileTabConfig = () => {
+    if (isGuest) {
+      return { label: t('common.sign_in', 'Sign In'), icon: LogIn };
+    }
     if (isAdmin) {
-      return { label: t('nav.admin_portal', 'Admin'), icon: ShieldCheck };
+      return { label: t('nav.admin_portal', 'Trustee Admin'), icon: ShieldCheck };
     }
     if (isManagement) {
       return { label: t('nav.mgmt_portal', 'Operations'), icon: Briefcase };
@@ -29,7 +33,7 @@ export const TopNav: React.FC<TopNavProps> = ({ currentTab, onSelectTab, user })
     if (isDonor) {
       return { label: t('nav.donor_portal', 'My Giving'), icon: Award };
     }
-    return { label: t('nav.profile', 'Impact Hub'), icon: User };
+    return { label: t('nav.profile', 'My Profile'), icon: User };
   };
 
   const profileConfig = getProfileTabConfig();

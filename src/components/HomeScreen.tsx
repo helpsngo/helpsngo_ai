@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { TabType, Mission, Project, ImpactStory, OrgStats, FieldDispatch, UserProfile } from '../types';
-import { INITIAL_ORG_STATS, INITIAL_FIELD_DISPATCHES, IMPACT_STORIES } from '../data/mockData';
+import { TabType, Mission, Project, ImpactStory, OrgStats, FieldDispatch, UserProfile, DonationRecord } from '../types';
+import { INITIAL_ORG_STATS, INITIAL_FIELD_DISPATCHES, IMPACT_STORIES, INITIAL_DONATIONS } from '../data/mockData';
 import { ImpactStoriesCarousel } from './ImpactStoriesCarousel';
 import { NewsletterSection } from './NewsletterSection';
 import { HomeImageCarousel } from './HomeImageCarousel';
@@ -8,6 +8,9 @@ import { GeospatialImpactMap } from './GeospatialImpactMap';
 import { IoTWaterTelemetryWidget } from './IoTWaterTelemetryWidget';
 import { BeforeAfterSlider } from './BeforeAfterSlider';
 import { NarrativeJourneySection } from './NarrativeJourneySection';
+import { GlobalImpactCounter } from './GlobalImpactCounter';
+import { GrassrootsLiveTicker } from './GrassrootsLiveTicker';
+import { GrassrootsRealityShowcase } from './GrassrootsRealityShowcase';
 import { 
   HeartHandshake, 
   Utensils, 
@@ -43,6 +46,7 @@ interface HomeScreenProps {
   stats?: OrgStats;
   dispatches?: FieldDispatch[];
   user?: UserProfile;
+  donations?: DonationRecord[];
   onOpenAdminStudio?: () => void;
   onEditProject?: (project: Project) => void;
   onEditStats?: () => void;
@@ -53,7 +57,6 @@ interface HomeScreenProps {
   onOpenWebhooks?: () => void;
   onOpenAboutOrg?: () => void;
   onOpenLegalPolicies?: (policyId?: string) => void;
-  onOpenSecuritySimulator?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -66,6 +69,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   stats = INITIAL_ORG_STATS,
   dispatches = INITIAL_FIELD_DISPATCHES,
   user,
+  donations = INITIAL_DONATIONS,
   onOpenAdminStudio,
   onEditProject,
   onEditStats,
@@ -75,8 +79,7 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenTaxCert,
   onOpenWebhooks,
   onOpenAboutOrg,
-  onOpenLegalPolicies,
-  onOpenSecuritySimulator
+  onOpenLegalPolicies
 }) => {
   const isAdmin = user?.role === 'admin';
   const isManagement = user?.role === 'management';
@@ -164,6 +167,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       )}
 
+      {/* Live Grassroots Reality Telemetry Ticker */}
+      <GrassrootsLiveTicker 
+        onNavigate={onNavigate} 
+        onOpenAboutOrg={onOpenAboutOrg} 
+      />
+
       {/* Image Sliding Carousel */}
       <HomeImageCarousel
         onNavigate={onNavigate}
@@ -230,6 +239,12 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </section>
 
+      {/* Real-Time Global Impact Counter (Derived from donation history records) */}
+      <GlobalImpactCounter
+        donations={donations}
+        onNavigate={onNavigate}
+      />
+
       {/* Primary Narrative Journey: Who we are → What we do → Where we work → What changed → How you can participate */}
       <NarrativeJourneySection
         onNavigate={onNavigate}
@@ -240,6 +255,13 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         onOpenCorporateCSR={onOpenCorporateCSR}
         onOpenTaxCert={onOpenTaxCert}
         user={user}
+      />
+
+      {/* Ground Reality & 24-Hour Field Rhythm Showcase */}
+      <GrassrootsRealityShowcase
+        onNavigate={onNavigate}
+        onSelectProject={onSelectProject}
+        projects={projects}
       />
 
       {/* Bento Grid: 2-Column Impact Metric Tiles */}
@@ -553,6 +575,74 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </section>
 
+      {/* Field Telemetry & GIS Command Center (Public Proof of Ground Reality) */}
+      <section className="space-y-3 pt-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+          <div>
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                Ground Reality & IoT Telemetry
+              </span>
+            </div>
+            <h2 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
+              Live Field Intelligence & Borewell Telemetry
+            </h2>
+          </div>
+
+          {/* View switcher */}
+          <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl border border-gray-200 dark:border-zinc-700">
+            <button
+              onClick={() => setActiveTelemetryTab('map')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTelemetryTab === 'map'
+                  ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Compass className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+              <span>GIS Map</span>
+            </button>
+            <button
+              onClick={() => setActiveTelemetryTab('iot')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTelemetryTab === 'iot'
+                  ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <Radio className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+              <span>IoT Telemetry</span>
+            </button>
+            <button
+              onClick={() => setActiveTelemetryTab('before_after')}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                activeTelemetryTab === 'before_after'
+                  ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
+                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+              }`}
+            >
+              <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+              <span>Before & After</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Dynamic Display based on Tab */}
+        {activeTelemetryTab === 'map' && (
+          <GeospatialImpactMap
+            onSelectProject={onSelectProject}
+            onDonateClick={() => onNavigate('donate')}
+          />
+        )}
+        {activeTelemetryTab === 'iot' && (
+          <IoTWaterTelemetryWidget />
+        )}
+        {activeTelemetryTab === 'before_after' && (
+          <BeforeAfterSlider />
+        )}
+      </section>
+
       {/* Admin Executive & Operations Suite (Visible ONLY to Admin after login) */}
       {isAdmin && (
         <div className="space-y-4 pt-2 border-t-2 border-dashed border-purple-200 dark:border-purple-900/60 my-4">
@@ -567,71 +657,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
               Admin Exclusive Controls
             </span>
           </div>
-
-          {/* Enterprise Feature 1: Interactive Field Telemetry & GIS Command Center */}
-          <section className="space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-              <div>
-                <span className="text-[10px] font-black uppercase tracking-widest text-orange-600">
-                  Enterprise Field Transparency
-                </span>
-                <h2 className="text-sm sm:text-base font-black text-gray-900 leading-tight">
-                  Live Field Ground Intelligence & IoT Telemetry
-                </h2>
-              </div>
-
-              {/* View switcher */}
-              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-2xl border border-gray-200">
-                <button
-                  onClick={() => setActiveTelemetryTab('map')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTelemetryTab === 'map'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Compass className="w-3.5 h-3.5 text-orange-600" />
-                  <span>GIS Map</span>
-                </button>
-                <button
-                  onClick={() => setActiveTelemetryTab('iot')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTelemetryTab === 'iot'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <Radio className="w-3.5 h-3.5 text-cyan-600" />
-                  <span>IoT Telemetry</span>
-                </button>
-                <button
-                  onClick={() => setActiveTelemetryTab('before_after')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                    activeTelemetryTab === 'before_after'
-                      ? 'bg-white text-gray-900 shadow-xs'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-600" />
-                  <span>Before & After</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Dynamic Display based on Tab */}
-            {activeTelemetryTab === 'map' && (
-              <GeospatialImpactMap
-                onSelectProject={onSelectProject}
-                onDonateClick={() => onNavigate('donate')}
-              />
-            )}
-            {activeTelemetryTab === 'iot' && (
-              <IoTWaterTelemetryWidget />
-            )}
-            {activeTelemetryTab === 'before_after' && (
-              <BeforeAfterSlider />
-            )}
-          </section>
 
           {/* Enterprise Feature 2: Corporate CSR & Section 80G Tax Exemption Hub Banner */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -882,14 +907,6 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {onOpenSecuritySimulator && (
-            <button
-              onClick={onOpenSecuritySimulator}
-              className="text-[10px] font-bold text-purple-700 hover:text-purple-800 bg-purple-50 px-2.5 py-1 rounded-xl border border-purple-200 flex items-center gap-1 uppercase tracking-wider cursor-pointer"
-            >
-              <span>Security Guard Sandbox</span>
-            </button>
-          )}
           {onOpenLegalPolicies && (
             <button
               onClick={() => onOpenLegalPolicies('privacy-policy')}

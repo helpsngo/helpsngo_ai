@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "org.helpsngo.app",
+      "sha256_cert_fingerprints": [
+        "14:6D:E9:7D:0F:52:AB:FC:02:64:99:A2:30:E5:60:BB:1E:58:BF:B4:EB:18:CE:D7:9C:3E:99:3B:55:09:A6:6E"
+      ]
+    }
+  }
+]

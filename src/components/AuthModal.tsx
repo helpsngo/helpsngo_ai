@@ -84,7 +84,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
   // Resend Timer Countdown
   useEffect(() => {
-    let timer: NodeJS.Timeout;
+    let timer: ReturnType<typeof setTimeout>;
     if (otpCountdown > 0) {
       timer = setTimeout(() => setOtpCountdown(c => c - 1), 1000);
     }
@@ -945,3 +945,5 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     </div>
   );
 };
+
+export default AuthModal;

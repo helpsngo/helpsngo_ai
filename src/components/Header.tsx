@@ -1,6 +1,6 @@
 import React from 'react';
 import { TabType, UserProfile } from '../types';
-import { ArrowLeft, HeartHandshake, ShieldCheck, User, LogIn, Briefcase, Bell, MessageSquare } from 'lucide-react';
+import { ArrowLeft, HeartHandshake, ShieldCheck, User, LogIn, Briefcase, Bell, MessageSquare, LogOut } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { OfflineSyncBadge } from './OfflineSyncBadge';
 import { useTranslation } from '../i18n/I18nContext';
@@ -13,6 +13,7 @@ interface HeaderProps {
   subtitleOverride?: string;
   user?: UserProfile;
   onOpenAuth?: () => void;
+  onLogout?: () => void;
   pendingApprovalsCount?: number;
   onOpenApprovals?: () => void;
   onOpenWorkAssignments?: () => void;
@@ -29,6 +30,7 @@ export const Header: React.FC<HeaderProps> = ({
   subtitleOverride,
   user,
   onOpenAuth,
+  onLogout,
   pendingApprovalsCount = 0,
   onOpenApprovals,
   onOpenWorkAssignments,
@@ -73,6 +75,15 @@ export const Header: React.FC<HeaderProps> = ({
             <ShieldCheck className="w-3.5 h-3.5" />
             <span>{t('common.tax_free', '80G Tax Free')}</span>
           </div>
+          {!isGuest && onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer"
+              title="Sign Out to Public Access Gate"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </header>
     );
@@ -127,7 +138,7 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 dark:text-gray-400 block leading-tight">Helps NGO</span>
             <h1 className="text-base font-extrabold tracking-tight text-gray-900 dark:text-white leading-tight">
               {isGuest 
-                ? 'Guest Community Hub' 
+                ? 'Authority Access Portal' 
                 : isAdmin 
                 ? 'NGO Admin Portal' 
                 : isManagement 
@@ -177,6 +188,15 @@ export const Header: React.FC<HeaderProps> = ({
               )}
             </button>
           )}
+          {!isGuest && onLogout && (
+            <button
+              onClick={onLogout}
+              className="p-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer"
+              title="Sign Out to Public Access Gate"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+            </button>
+          )}
         </div>
       </header>
     );
@@ -199,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
           <p className="text-[9px] text-gray-400 dark:text-gray-500 font-bold uppercase tracking-wider">
-            {subtitleOverride || 'Help Foundation'}
+            {subtitleOverride || 'HELPS Welfare Society'}
           </p>
         </div>
       </div>
@@ -281,6 +301,15 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="max-w-[60px] truncate">{isAdmin ? 'Admin' : isManagement ? 'Mgmt' : isVolunteer ? 'Vol' : user?.name.split(' ')[0]}</span>
               </>
             )}
+          </button>
+        )}
+        {!isGuest && onLogout && (
+          <button
+            onClick={onLogout}
+            className="p-1.5 rounded-full bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/60 border border-rose-200 dark:border-rose-800 transition-all cursor-pointer"
+            title="Sign Out to Public Access Gate"
+          >
+            <LogOut className="w-3.5 h-3.5" />
           </button>
         )}
         <button

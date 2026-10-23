@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { 
   TabType, 
   Project, 
@@ -29,34 +29,42 @@ import { ProjectsScreen } from './components/ProjectsScreen';
 import { DonateScreen } from './components/DonateScreen';
 import { ProfileScreen } from './components/ProfileScreen';
 import { VolunteerScreen } from './components/VolunteerScreen';
-import { ProjectDetailModal } from './components/ProjectDetailModal';
-import { ReceiptModal } from './components/ReceiptModal';
-import { CertificateModal } from './components/CertificateModal';
-import { SettingsModal } from './components/SettingsModal';
 import { AuthModal } from './components/AuthModal';
-import { AdminProjectModal } from './components/AdminProjectModal';
-import { AdminStatsModal } from './components/AdminStatsModal';
-import { AdminStoryModal } from './components/AdminStoryModal';
-import { AdminContentStudioModal } from './components/AdminContentStudioModal';
-import { AdminApprovalsModal } from './components/AdminApprovalsModal';
-import { WorkAssignmentModal } from './components/WorkAssignmentModal';
-import { CorporateCSRModal } from './components/CorporateCSRModal';
-import { TaxExemptionModal } from './components/TaxExemptionModal';
-import { NotificationWebhooksModal } from './components/NotificationWebhooksModal';
-import { OfflineSyncModal } from './components/OfflineSyncModal';
-import { RoleSwitcherBar } from './components/RoleSwitcherBar';
-import { ContentApprovalPipelineModal } from './components/ContentApprovalPipelineModal';
-import { AdminCertificateControlModal } from './components/AdminCertificateControlModal';
-import { AdminUserManagementModal } from './components/AdminUserManagementModal';
-import { AboutOrganizationModal } from './components/AboutOrganizationModal';
-import { AppreciationLetterModal } from './components/AppreciationLetterModal';
-import { HierarchyConnectionModal } from './components/HierarchyConnectionModal';
-import { AuthPipelineVisualizer } from './components/AuthGuard';
-import { LegalPoliciesModal } from './components/LegalPoliciesModal';
-import { DirectUrlSecuritySimulator } from './components/DirectUrlSecuritySimulator';
 import { AuthProvider } from './context/AuthContext';
 import { authService } from './services/authService';
 import { submitVolunteerApplication } from './services/rbacService';
+import { mobileService } from './services/mobileService';
+
+// Dynamic Lazy Imports for Large Modals (Reduces initial bundle size & improves mobile load times)
+const ProjectDetailModal = lazy(() => import('./components/ProjectDetailModal').then(m => ({ default: m.ProjectDetailModal })));
+const ReceiptModal = lazy(() => import('./components/ReceiptModal').then(m => ({ default: m.ReceiptModal })));
+const AppreciationLetterModal = lazy(() => import('./components/AppreciationLetterModal').then(m => ({ default: m.AppreciationLetterModal })));
+const CertificateModal = lazy(() => import('./components/CertificateModal').then(m => ({ default: m.CertificateModal })));
+const AdminCertificateControlModal = lazy(() => import('./components/AdminCertificateControlModal').then(m => ({ default: m.AdminCertificateControlModal })));
+const SettingsModal = lazy(() => import('./components/SettingsModal').then(m => ({ default: m.SettingsModal })));
+const NotificationWebhooksModal = lazy(() => import('./components/NotificationWebhooksModal').then(m => ({ default: m.NotificationWebhooksModal })));
+const AdminApprovalsModal = lazy(() => import('./components/AdminApprovalsModal').then(m => ({ default: m.AdminApprovalsModal })));
+const AdminContentStudioModal = lazy(() => import('./components/AdminContentStudioModal').then(m => ({ default: m.AdminContentStudioModal })));
+const AdminProjectModal = lazy(() => import('./components/AdminProjectModal').then(m => ({ default: m.AdminProjectModal })));
+const AdminStatsModal = lazy(() => import('./components/AdminStatsModal').then(m => ({ default: m.AdminStatsModal })));
+const AdminStoryModal = lazy(() => import('./components/AdminStoryModal').then(m => ({ default: m.AdminStoryModal })));
+const WorkAssignmentModal = lazy(() => import('./components/WorkAssignmentModal').then(m => ({ default: m.WorkAssignmentModal })));
+const CorporateCSRModal = lazy(() => import('./components/CorporateCSRModal').then(m => ({ default: m.CorporateCSRModal })));
+const TaxExemptionModal = lazy(() => import('./components/TaxExemptionModal').then(m => ({ default: m.TaxExemptionModal })));
+const OfflineSyncModal = lazy(() => import('./components/OfflineSyncModal').then(m => ({ default: m.OfflineSyncModal })));
+const ContentApprovalPipelineModal = lazy(() => import('./components/ContentApprovalPipelineModal').then(m => ({ default: m.ContentApprovalPipelineModal })));
+const AdminUserManagementModal = lazy(() => import('./components/AdminUserManagementModal').then(m => ({ default: m.AdminUserManagementModal })));
+const AboutOrganizationModal = lazy(() => import('./components/AboutOrganizationModal').then(m => ({ default: m.AboutOrganizationModal })));
+const LegalPoliciesModal = lazy(() => import('./components/LegalPoliciesModal').then(m => ({ default: m.LegalPoliciesModal })));
+
+const ModalLoadingFallback = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
+    <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-2xl flex flex-col items-center gap-3 max-w-xs w-full text-center">
+      <div className="w-7 h-7 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+      <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">Loading module...</span>
+    </div>
+  </div>
+);
 
 const WORK_ASSIGNMENTS_STORAGE_KEY = 'helps_ngo_work_assignments_v1';
 
@@ -152,11 +160,14 @@ export default function App() {
   const [isApprovalPipelineOpen, setIsApprovalPipelineOpen] = useState<boolean>(false);
   const [isAdminCertControlOpen, setIsAdminCertControlOpen] = useState<boolean>(false);
   const [isAdminUserManagementOpen, setIsAdminUserManagementOpen] = useState<boolean>(false);
-  const [isHierarchyModalOpen, setIsHierarchyModalOpen] = useState<boolean>(false);
   const [selectedCertForDetail, setSelectedCertForDetail] = useState<string | undefined>(undefined);
   const [isLegalPoliciesOpen, setIsLegalPoliciesOpen] = useState<boolean>(false);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string>('privacy-policy');
-  const [isSecuritySimulatorOpen, setIsSecuritySimulatorOpen] = useState<boolean>(false);
+
+  // Initialize native Capacitor & mobile runtime features (status bar, splash screen, hardware back button)
+  useEffect(() => {
+    mobileService.initMobileApp();
+  }, []);
 
   const isAdmin = user.role === 'admin' || user.role === 'super_admin';
   const isManagement = user.role === 'management' || user.role === 'program_manager';
@@ -567,436 +578,402 @@ export default function App() {
   return (
     <AuthProvider currentUser={user} onUserChange={handleSetUser}>
       <DeviceFrame>
-        {/* Security & Role Authorization Pipeline Bar */}
-        <AuthPipelineVisualizer onOpenAuth={() => setIsAuthOpen(true)} />
-
-        {/* Role-Based Access Control Bar */}
-        <RoleSwitcherBar
-          currentUser={user}
-          onSelectUser={handleSetUser}
-          onOpenApprovalPipeline={() => setIsApprovalPipelineOpen(true)}
+        {/* Top Header */}
+        <Header
+          currentTab={currentTab}
+          onNavigate={handleNavigate}
+          onBack={() => handleNavigate(previousTab || 'home')}
+          user={user}
+          onOpenAuth={() => setIsAuthOpen(true)}
+          onLogout={handleLogout}
+          pendingApprovalsCount={pendingApprovalsCount}
+          onOpenApprovals={() => setIsAdminApprovalsOpen(true)}
           onOpenWorkAssignments={() => setIsWorkAssignmentModalOpen(true)}
-          onOpenCertificates={() => {
-            setSelectedCertForDetail(undefined);
-            setIsCertificateOpen(true);
-          }}
-          onOpenAdminCertControl={() => setIsAdminCertControlOpen(true)}
-          onOpenUserManagement={isAdmin ? () => setIsAdminUserManagementOpen(true) : undefined}
-          onOpenHierarchy={() => setIsHierarchyModalOpen(true)}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          pendingAdminApprovalCount={2}
-          pendingMgmtReviewCount={1}
+          pendingTasksCount={pendingTasksCount}
+          onOpenWebhooks={() => setIsWebhooksModalOpen(true)}
+          onOpenOfflineSync={() => setIsOfflineSyncModalOpen(true)}
         />
 
-      {/* Top Header */}
-      <Header
-        currentTab={currentTab}
-        onNavigate={handleNavigate}
-        onBack={() => handleNavigate(previousTab || 'home')}
-        user={user}
-        onOpenAuth={() => setIsAuthOpen(true)}
-        pendingApprovalsCount={pendingApprovalsCount}
-        onOpenApprovals={() => setIsAdminApprovalsOpen(true)}
-        onOpenWorkAssignments={() => setIsWorkAssignmentModalOpen(true)}
-        pendingTasksCount={pendingTasksCount}
-        onOpenWebhooks={() => setIsWebhooksModalOpen(true)}
-        onOpenOfflineSync={() => setIsOfflineSyncModalOpen(true)}
-      />
-
-      {/* Top Navigation Bar */}
-      <TopNav
-        currentTab={currentTab}
-        onSelectTab={handleNavigate}
-        user={user}
-      />
-
-      {/* Screen Content */}
-      <div className="flex-1">
-        {currentTab === 'home' && (
-          <HomeScreen
-            onNavigate={handleNavigate}
-            onSelectProject={handleSelectProject}
-            onDonateToProject={handleDonateToProject}
-            projects={projects}
-            missions={MISSIONS}
-            stories={stories}
-            stats={stats}
-            dispatches={dispatches}
-            user={user}
-            onOpenAdminStudio={() => isAdmin && setIsAdminStudioOpen(true)}
-            onEditProject={isAdmin ? handleOpenEditProject : undefined}
-            onEditStats={isAdmin ? () => setIsAdminStatsModalOpen(true) : undefined}
-            onEditStory={isAdmin ? handleOpenEditStory : undefined}
-            onAddNewStory={isAdmin ? () => handleOpenEditStory(null) : undefined}
-            onOpenCorporateCSR={() => setIsCSRModalOpen(true)}
-            onOpenTaxCert={() => setIsTaxCertModalOpen(true)}
-            onOpenWebhooks={() => setIsWebhooksModalOpen(true)}
-            onOpenAboutOrg={() => setIsAboutOrgOpen(true)}
-            onOpenLegalPolicies={(policyId) => {
-              if (policyId) setSelectedPolicyId(policyId);
-              setIsLegalPoliciesOpen(true);
-            }}
-            onOpenSecuritySimulator={() => setIsSecuritySimulatorOpen(true)}
-          />
-        )}
-
-        {currentTab === 'projects' && (
-          <ProjectsScreen
-            projects={projects}
-            onSelectProject={handleSelectProject}
-            onDonateToProject={handleDonateToProject}
-            user={user}
-            onEditProject={isAdmin ? handleOpenEditProject : undefined}
-            onAddNewProject={isAdmin ? () => handleOpenEditProject(null) : undefined}
-          />
-        )}
-
-        {currentTab === 'donate' && (
-          <DonateScreen
-            selectedProject={selectedProjectForDonation}
-            projects={projects}
-            onDonationSuccess={handleDonationSuccess}
-            userCurrency={user.currency}
-            defaultEmail={user.role !== 'guest' ? user.email : ''}
-            defaultName={user.role !== 'guest' ? user.name : ''}
-            onSelectProjectChange={(proj) => setSelectedProjectForDonation(proj)}
-          />
-        )}
-
-        {currentTab === 'profile' && (
-          <ProfileScreen
-            user={user}
-            donations={donations}
-            onOpenSettings={() => setIsSettingsOpen(true)}
-            onOpenCertificate={() => setIsCertificateOpen(true)}
-            onViewReceipt={(donation) => setViewingReceipt(donation)}
-            onNavigate={handleNavigate}
-            onLogout={handleLogout}
-            onOpenAuth={() => setIsAuthOpen(true)}
-            onOpenAdminStudio={isAdmin ? () => setIsAdminStudioOpen(true) : undefined}
-            onOpenApprovals={isAdmin ? () => setIsAdminApprovalsOpen(true) : undefined}
-            onAddNewProject={isAdmin ? () => handleOpenEditProject(null) : undefined}
-            onEditStats={isAdmin ? () => setIsAdminStatsModalOpen(true) : undefined}
-            workAssignments={workAssignments}
-            onOpenWorkAssignments={() => setIsWorkAssignmentModalOpen(true)}
-            onOpenWebhooks={() => setIsWebhooksModalOpen(true)}
-            onOpenApprovalPipeline={() => setIsApprovalPipelineOpen(true)}
-            onOpenAdminCertControl={isAdmin ? () => setIsAdminCertControlOpen(true) : undefined}
-            onOpenUserManagement={isAdmin ? () => setIsAdminUserManagementOpen(true) : undefined}
-            onOpenAboutOrg={() => setIsAboutOrgOpen(true)}
-            onOpenHierarchy={() => setIsHierarchyModalOpen(true)}
-            onOpenTaxCert={() => setIsTaxCertModalOpen(true)}
-            onOpenCorporateCSR={() => setIsCSRModalOpen(true)}
-          />
-        )}
-
-        {currentTab === 'volunteer' && (
-          <VolunteerScreen
-            user={user}
-            onSubmitSuccess={handleVolunteerSubmit}
-            onNavigateHome={() => handleNavigate('home')}
-            onOpenCertificate={() => setIsCertificateOpen(true)}
-            onOpenAdminStudio={isAdmin ? () => setIsAdminStudioOpen(true) : undefined}
-            onOpenAuth={() => setIsAuthOpen(true)}
-            onLogHours={handleLogVolunteerHours}
-            workAssignments={workAssignments}
-            onOpenWorkAssignments={() => setIsWorkAssignmentModalOpen(true)}
-            onUpdateAssignment={handleUpdateWorkAssignment}
-          />
-        )}
-      </div>
-
-      {/* Project Detail Modal */}
-      <ProjectDetailModal
-        project={selectedProjectForDetail}
-        onClose={() => setSelectedProjectForDetail(null)}
-        onDonate={(p) => {
-          setSelectedProjectForDetail(null);
-          handleDonateToProject(p);
-        }}
-        user={user}
-        onEditProject={isAdmin ? handleOpenEditProject : undefined}
-      />
-
-      {/* 80G Tax Exemption Receipt Modal */}
-      <ReceiptModal
-        donation={viewingReceipt}
-        user={user}
-        onClose={() => setViewingReceipt(null)}
-        onApproveDonation={handleApproveDonation}
-        onOpenForm10BE={() => setIsTaxCertModalOpen(true)}
-        onOpenAppreciationLetter={(d) => setViewingAppreciationLetter(d)}
-      />
-
-      {/* Formal Signed Letter of Appreciation Modal */}
-      <AppreciationLetterModal
-        donation={viewingAppreciationLetter}
-        user={user}
-        isOpen={!!viewingAppreciationLetter}
-        onClose={() => setViewingAppreciationLetter(null)}
-        onViewImpactUpdate={() => {
-          setViewingAppreciationLetter(null);
-          handleNavigate('donate');
-        }}
-      />
-
-      {/* Volunteer & Honors Certificate Modal / Secure Vault */}
-      {isCertificateOpen && (
-        <CertificateModal
+        {/* Top Navigation Bar */}
+        <TopNav
+          currentTab={currentTab}
+          onSelectTab={handleNavigate}
           user={user}
-          onClose={() => {
-            setIsCertificateOpen(false);
-            setSelectedCertForDetail(undefined);
-          }}
-          onOpenAuth={() => setIsAuthOpen(true)}
-          onOpenAdminStudio={isAdmin ? () => setIsAdminCertControlOpen(true) : undefined}
-          initialCertificateId={selectedCertForDetail}
         />
-      )}
 
-      {/* Admin Certificate Authority & Batch Control Studio Modal */}
-      {isAdmin && isAdminCertControlOpen && (
-        <AdminCertificateControlModal
-          isOpen={isAdminCertControlOpen}
-          onClose={() => setIsAdminCertControlOpen(false)}
-          currentUser={user}
-          onPreviewCertificate={(cert) => {
-            setSelectedCertForDetail(cert.id);
-            setIsCertificateOpen(true);
-          }}
-        />
-      )}
-
-      {/* Account Settings Modal */}
-      {isSettingsOpen && (
-        <SettingsModal
-          user={user}
-          onUpdateUser={(updated) => handleSetUser(updated)}
-          onClose={() => setIsSettingsOpen(false)}
-          onOpenWebhooks={() => {
-            setIsSettingsOpen(false);
-            setIsWebhooksModalOpen(true);
-          }}
-        />
-      )}
-
-      {/* Automated Donor WhatsApp & Mail Notification Webhooks Hub */}
-      <NotificationWebhooksModal
-        isOpen={isWebhooksModalOpen}
-        onClose={() => setIsWebhooksModalOpen(false)}
-      />
-
-      {/* Credential-Based Authentication & Account Creation Modal */}
-      <AuthModal
-        isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
-        currentUser={user}
-        onSelectUser={handleSetUser}
-      />
-
-      {/* Admin 80G Tax Exemption & Badge Approvals Queue Modal */}
-      {isAdmin && (
-        <AdminApprovalsModal
-          isOpen={isAdminApprovalsOpen}
-          onClose={() => setIsAdminApprovalsOpen(false)}
-          donations={donations}
-          onApproveDonation={handleApproveDonation}
-          onRejectDonation={handleRejectDonation}
-          onViewReceipt={(donation) => setViewingReceipt(donation)}
-        />
-      )}
-
-      {/* Admin Content Studio Hub Modal */}
-      {isAdmin && (
-        <AdminContentStudioModal
-          isOpen={isAdminStudioOpen}
-          onClose={() => setIsAdminStudioOpen(false)}
-          projects={projects}
-          stats={stats}
-          stories={stories}
-          dispatches={dispatches}
-          donations={donations}
-          onOpenEditProject={handleOpenEditProject}
-          onOpenEditStats={() => {
-            setIsAdminStudioOpen(false);
-            setIsAdminStatsModalOpen(true);
-          }}
-          onOpenEditStory={handleOpenEditStory}
-          onSaveDispatch={handleSaveDispatch}
-          onDeleteDispatch={handleDeleteDispatch}
-          onDeleteProject={handleDeleteProject}
-          onDeleteStory={handleDeleteStory}
-          onNavigate={(t) => {
-            setIsAdminStudioOpen(false);
-            handleNavigate(t);
-          }}
-          onApproveDonation={handleApproveDonation}
-          onRejectDonation={handleRejectDonation}
-          onViewReceipt={(donation) => setViewingReceipt(donation)}
-        />
-      )}
-
-      {/* Admin Program & Media Editor Modal (with local image file upload) */}
-      <AdminProjectModal
-        isOpen={isAdminProjectModalOpen}
-        onClose={() => {
-          setIsAdminProjectModalOpen(false);
-          setAdminProjectToEdit(null);
-        }}
-        projectToEdit={adminProjectToEdit}
-        onSaveProject={handleSaveProject}
-        onDeleteProject={handleDeleteProject}
-        user={user}
-      />
-
-      {/* Admin Org Metrics & Mission Text Modal */}
-      {isAdmin && (
-        <AdminStatsModal
-          isOpen={isAdminStatsModalOpen}
-          onClose={() => setIsAdminStatsModalOpen(false)}
-          stats={stats}
-          onSaveStats={handleSaveStats}
-        />
-      )}
-
-      {/* Admin Impact Story & Beneficiary Modal (with local image file upload) */}
-      <AdminStoryModal
-        isOpen={isAdminStoryModalOpen}
-        onClose={() => {
-          setIsAdminStoryModalOpen(false);
-          setAdminStoryToEdit(null);
-        }}
-        storyToEdit={adminStoryToEdit}
-        onSaveStory={handleSaveStory}
-        onDeleteStory={handleDeleteStory}
-        user={user}
-      />
-
-      {/* Field Work & Operations Assignment Hub (Admin -> Management -> Volunteer Hierarchy) */}
-      <WorkAssignmentModal
-        isOpen={isWorkAssignmentModalOpen}
-        onClose={() => setIsWorkAssignmentModalOpen(false)}
-        currentUser={user}
-        user={user}
-        assignments={workAssignments}
-        tasks={workAssignments}
-        onAddAssignment={handleAddWorkAssignment}
-        onUpdateAssignment={handleUpdateWorkAssignment}
-        onDeleteAssignment={handleDeleteWorkAssignment}
-        onAddTask={handleAddWorkAssignment}
-        onUpdateTask={handleUpdateWorkAssignment}
-        onDeleteTask={handleDeleteWorkAssignment}
-        onLogVolunteerHours={handleLogVolunteerHours}
-      />
-
-      {/* Corporate CSR & Institutional Giving Suite Modal */}
-      <CorporateCSRModal
-        isOpen={isCSRModalOpen}
-        onClose={() => setIsCSRModalOpen(false)}
-        user={user}
-        projects={projects}
-      />
-
-      {/* Instant Form 10BE / Section 80G Statutory Tax Exemption Certificate Modal */}
-      <TaxExemptionModal
-        isOpen={isTaxCertModalOpen}
-        onClose={() => setIsTaxCertModalOpen(false)}
-        user={user}
-        donation={donations[0] || null}
-      />
-
-      {/* Village Offline Field Sync & PWA Service Worker Console Modal */}
-      <OfflineSyncModal
-        isOpen={isOfflineSyncModalOpen}
-        onClose={() => setIsOfflineSyncModalOpen(false)}
-      />
-
-      {/* Content & Work Approval Workflow Pipeline Modal (Admin -> Mgmt -> Volunteer -> Public) */}
-      <ContentApprovalPipelineModal
-        isOpen={isApprovalPipelineOpen}
-        onClose={() => setIsApprovalPipelineOpen(false)}
-        currentUser={user}
-        onContentPublished={handleContentPublished}
-      />
-
-      {/* Admin User Management & Role Promotion Console Modal (Admin Only) */}
-      {isAdmin && (
-        <AdminUserManagementModal
-          isOpen={isAdminUserManagementOpen}
-          onClose={() => setIsAdminUserManagementOpen(false)}
-          currentUser={user}
-          onUserUpdated={(updatedUser) => {
-            if (user.id === updatedUser.id || user.email.toLowerCase() === updatedUser.email.toLowerCase()) {
-              handleSetUser(updatedUser);
-            }
-          }}
-          onOpenHierarchy={() => {
-            setIsAdminUserManagementOpen(false);
-            setIsHierarchyModalOpen(true);
-          }}
-        />
-      )}
-      {/* Official Organization Profile, Mission & Statutory Transparency Modal */}
-      <AboutOrganizationModal
-        isOpen={isAboutOrgOpen}
-        onClose={() => setIsAboutOrgOpen(false)}
-        onNavigateDonate={() => {
-          setIsAboutOrgOpen(false);
-          handleNavigate('donate');
-        }}
-        onNavigateVolunteer={() => {
-          setIsAboutOrgOpen(false);
-          handleNavigate('volunteer');
-        }}
-      />
-
-      {/* 5-Tier Organizational Hierarchy, Access Connection & Workflow Matrix Modal */}
-      <HierarchyConnectionModal
-        isOpen={isHierarchyModalOpen}
-        onClose={() => setIsHierarchyModalOpen(false)}
-        currentUser={user}
-        onSwitchUser={handleSetUser}
-        onOpenApprovalPipeline={() => {
-          setIsHierarchyModalOpen(false);
-          setIsApprovalPipelineOpen(true);
-        }}
-        onOpenWorkAssignments={() => {
-          setIsHierarchyModalOpen(false);
-          setIsWorkAssignmentModalOpen(true);
-        }}
-        onOpenUserManagement={isAdmin ? () => {
-          setIsHierarchyModalOpen(false);
-          setIsAdminUserManagementOpen(true);
-        } : undefined}
-      />
-
-      {/* Statutory Legal Governance & 8 NGO Statutory Policies Modal */}
-      <LegalPoliciesModal
-        isOpen={isLegalPoliciesOpen}
-        onClose={() => setIsLegalPoliciesOpen(false)}
-        initialPolicyId={selectedPolicyId}
-      />
-
-      {/* Direct URL Security Sandbox & Zero-Trust Route Guard Simulator */}
-      {isSecuritySimulatorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/70 backdrop-blur-sm animate-fadeIn">
-          <div className="max-w-3xl w-full max-h-[90vh] overflow-y-auto rounded-3xl shadow-2xl relative">
-            <button
-              onClick={() => setIsSecuritySimulatorOpen(false)}
-              className="absolute top-4 right-4 z-10 w-8 h-8 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center hover:bg-slate-700 hover:text-white cursor-pointer border border-slate-700"
-            >
-              ✕
-            </button>
-            <DirectUrlSecuritySimulator
-              currentUser={user}
-              onNavigateToScreen={(scr) => {
-                setIsSecuritySimulatorOpen(false);
-                handleNavigate(scr);
+        {/* Screen Content */}
+        <div className="flex-1">
+          {currentTab === 'home' && (
+            <HomeScreen
+              onNavigate={handleNavigate}
+              onSelectProject={handleSelectProject}
+              onDonateToProject={handleDonateToProject}
+              projects={projects}
+              missions={MISSIONS}
+              stories={stories}
+              stats={stats}
+              dispatches={dispatches}
+              user={user}
+              donations={donations}
+              onOpenAdminStudio={() => isAdmin && setIsAdminStudioOpen(true)}
+              onEditProject={isAdmin ? handleOpenEditProject : undefined}
+              onEditStats={isAdmin ? () => setIsAdminStatsModalOpen(true) : undefined}
+              onEditStory={isAdmin ? handleOpenEditStory : undefined}
+              onAddNewStory={isAdmin ? () => handleOpenEditStory(null) : undefined}
+              onOpenCorporateCSR={() => setIsCSRModalOpen(true)}
+              onOpenTaxCert={() => setIsTaxCertModalOpen(true)}
+              onOpenWebhooks={() => setIsWebhooksModalOpen(true)}
+              onOpenAboutOrg={() => setIsAboutOrgOpen(true)}
+              onOpenLegalPolicies={(policyId) => {
+                if (policyId) setSelectedPolicyId(policyId);
+                setIsLegalPoliciesOpen(true);
               }}
             />
-          </div>
+          )}
+
+          {currentTab === 'projects' && (
+            <ProjectsScreen
+              projects={projects}
+              onSelectProject={handleSelectProject}
+              onDonateToProject={handleDonateToProject}
+              user={user}
+              onEditProject={isAdmin ? handleOpenEditProject : undefined}
+              onAddNewProject={isAdmin ? () => handleOpenEditProject(null) : undefined}
+            />
+          )}
+
+          {currentTab === 'donate' && (
+            <DonateScreen
+              selectedProject={selectedProjectForDonation}
+              projects={projects}
+              onDonationSuccess={handleDonationSuccess}
+              userCurrency={user.currency}
+              defaultEmail={user.role !== 'guest' ? user.email : ''}
+              defaultName={user.role !== 'guest' ? user.name : ''}
+              onSelectProjectChange={(proj) => setSelectedProjectForDonation(proj)}
+            />
+          )}
+
+          {currentTab === 'profile' && (
+            <ProfileScreen
+              user={user}
+              donations={donations}
+              onOpenSettings={() => setIsSettingsOpen(true)}
+              onOpenCertificate={() => setIsCertificateOpen(true)}
+              onViewReceipt={(donation) => setViewingReceipt(donation)}
+              onNavigate={handleNavigate}
+              onLogout={handleLogout}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onOpenAdminStudio={isAdmin ? () => setIsAdminStudioOpen(true) : undefined}
+              onOpenApprovals={isAdmin ? () => setIsAdminApprovalsOpen(true) : undefined}
+              onAddNewProject={isAdmin ? () => handleOpenEditProject(null) : undefined}
+              onEditStats={isAdmin ? () => setIsAdminStatsModalOpen(true) : undefined}
+              workAssignments={workAssignments}
+              onOpenWorkAssignments={() => setIsWorkAssignmentModalOpen(true)}
+              onOpenWebhooks={() => setIsWebhooksModalOpen(true)}
+              onOpenApprovalPipeline={() => setIsApprovalPipelineOpen(true)}
+              onOpenAdminCertControl={isAdmin ? () => setIsAdminCertControlOpen(true) : undefined}
+              onOpenUserManagement={isAdmin ? () => setIsAdminUserManagementOpen(true) : undefined}
+              onOpenAboutOrg={() => setIsAboutOrgOpen(true)}
+              onOpenTaxCert={() => setIsTaxCertModalOpen(true)}
+              onOpenCorporateCSR={() => setIsCSRModalOpen(true)}
+            />
+          )}
+
+          {currentTab === 'volunteer' && (
+            <VolunteerScreen
+              user={user}
+              onSubmitSuccess={handleVolunteerSubmit}
+              onNavigateHome={() => handleNavigate('home')}
+              onOpenCertificate={() => setIsCertificateOpen(true)}
+              onOpenAdminStudio={isAdmin ? () => setIsAdminStudioOpen(true) : undefined}
+              onOpenAuth={() => setIsAuthOpen(true)}
+              onLogHours={handleLogVolunteerHours}
+              workAssignments={workAssignments}
+              onOpenWorkAssignments={() => setIsWorkAssignmentModalOpen(true)}
+              onUpdateAssignment={handleUpdateWorkAssignment}
+            />
+          )}
         </div>
-      )}
+
+      {/* Dynamic Lazy Loaded Modals & Overlay Modules */}
+      <Suspense fallback={<ModalLoadingFallback />}>
+        {/* Project Detail Modal */}
+        {selectedProjectForDetail && (
+          <ProjectDetailModal
+            project={selectedProjectForDetail}
+            onClose={() => setSelectedProjectForDetail(null)}
+            onDonate={(p) => {
+              setSelectedProjectForDetail(null);
+              handleDonateToProject(p);
+            }}
+            user={user}
+            onEditProject={isAdmin ? handleOpenEditProject : undefined}
+          />
+        )}
+
+        {/* 80G Tax Exemption Receipt Modal */}
+        {viewingReceipt && (
+          <ReceiptModal
+            donation={viewingReceipt}
+            user={user}
+            onClose={() => setViewingReceipt(null)}
+            onApproveDonation={handleApproveDonation}
+            onOpenForm10BE={() => setIsTaxCertModalOpen(true)}
+            onOpenAppreciationLetter={(d) => setViewingAppreciationLetter(d)}
+          />
+        )}
+
+        {/* Formal Signed Letter of Appreciation Modal */}
+        {viewingAppreciationLetter && (
+          <AppreciationLetterModal
+            donation={viewingAppreciationLetter}
+            user={user}
+            isOpen={!!viewingAppreciationLetter}
+            onClose={() => setViewingAppreciationLetter(null)}
+            onViewImpactUpdate={() => {
+              setViewingAppreciationLetter(null);
+              handleNavigate('donate');
+            }}
+          />
+        )}
+
+        {/* Volunteer & Honors Certificate Modal / Secure Vault */}
+        {isCertificateOpen && (
+          <CertificateModal
+            user={user}
+            onClose={() => {
+              setIsCertificateOpen(false);
+              setSelectedCertForDetail(undefined);
+            }}
+            onOpenAuth={() => setIsAuthOpen(true)}
+            onOpenAdminStudio={isAdmin ? () => setIsAdminCertControlOpen(true) : undefined}
+            initialCertificateId={selectedCertForDetail}
+          />
+        )}
+
+        {/* Admin Certificate Authority & Batch Control Studio Modal */}
+        {isAdmin && isAdminCertControlOpen && (
+          <AdminCertificateControlModal
+            isOpen={isAdminCertControlOpen}
+            onClose={() => setIsAdminCertControlOpen(false)}
+            currentUser={user}
+            onPreviewCertificate={(cert) => {
+              setSelectedCertForDetail(cert.id);
+              setIsCertificateOpen(true);
+            }}
+          />
+        )}
+
+        {/* Account Settings Modal */}
+        {isSettingsOpen && (
+          <SettingsModal
+            user={user}
+            onUpdateUser={(updated) => handleSetUser(updated)}
+            onClose={() => setIsSettingsOpen(false)}
+            onOpenWebhooks={() => {
+              setIsSettingsOpen(false);
+              setIsWebhooksModalOpen(true);
+            }}
+          />
+        )}
+
+        {/* Automated Donor WhatsApp & Mail Notification Webhooks Hub */}
+        {isWebhooksModalOpen && (
+          <NotificationWebhooksModal
+            isOpen={isWebhooksModalOpen}
+            onClose={() => setIsWebhooksModalOpen(false)}
+          />
+        )}
+
+        {/* Credential-Based Authentication & Account Creation Modal */}
+        {isAuthOpen && (
+          <AuthModal
+            isOpen={isAuthOpen}
+            onClose={() => setIsAuthOpen(false)}
+            currentUser={user}
+            onSelectUser={handleSetUser}
+          />
+        )}
+
+        {/* Admin 80G Tax Exemption & Badge Approvals Queue Modal */}
+        {isAdmin && isAdminApprovalsOpen && (
+          <AdminApprovalsModal
+            isOpen={isAdminApprovalsOpen}
+            onClose={() => setIsAdminApprovalsOpen(false)}
+            donations={donations}
+            onApproveDonation={handleApproveDonation}
+            onRejectDonation={handleRejectDonation}
+            onViewReceipt={(donation) => setViewingReceipt(donation)}
+          />
+        )}
+
+        {/* Admin Content Studio Hub Modal */}
+        {isAdmin && isAdminStudioOpen && (
+          <AdminContentStudioModal
+            isOpen={isAdminStudioOpen}
+            onClose={() => setIsAdminStudioOpen(false)}
+            projects={projects}
+            stats={stats}
+            stories={stories}
+            dispatches={dispatches}
+            donations={donations}
+            onOpenEditProject={handleOpenEditProject}
+            onOpenEditStats={() => {
+              setIsAdminStudioOpen(false);
+              setIsAdminStatsModalOpen(true);
+            }}
+            onOpenEditStory={handleOpenEditStory}
+            onSaveDispatch={handleSaveDispatch}
+            onDeleteDispatch={handleDeleteDispatch}
+            onDeleteProject={handleDeleteProject}
+            onDeleteStory={handleDeleteStory}
+            onNavigate={(t) => {
+              setIsAdminStudioOpen(false);
+              handleNavigate(t);
+            }}
+            onApproveDonation={handleApproveDonation}
+            onRejectDonation={handleRejectDonation}
+            onViewReceipt={(donation) => setViewingReceipt(donation)}
+          />
+        )}
+
+        {/* Admin Program & Media Editor Modal (with local image file upload) */}
+        {isAdminProjectModalOpen && (
+          <AdminProjectModal
+            isOpen={isAdminProjectModalOpen}
+            onClose={() => {
+              setIsAdminProjectModalOpen(false);
+              setAdminProjectToEdit(null);
+            }}
+            projectToEdit={adminProjectToEdit}
+            onSaveProject={handleSaveProject}
+            onDeleteProject={handleDeleteProject}
+            user={user}
+          />
+        )}
+
+        {/* Admin Org Metrics & Mission Text Modal */}
+        {isAdmin && isAdminStatsModalOpen && (
+          <AdminStatsModal
+            isOpen={isAdminStatsModalOpen}
+            onClose={() => setIsAdminStatsModalOpen(false)}
+            stats={stats}
+            onSaveStats={handleSaveStats}
+          />
+        )}
+
+        {/* Admin Impact Story & Beneficiary Modal (with local image file upload) */}
+        {isAdminStoryModalOpen && (
+          <AdminStoryModal
+            isOpen={isAdminStoryModalOpen}
+            onClose={() => {
+              setIsAdminStoryModalOpen(false);
+              setAdminStoryToEdit(null);
+            }}
+            storyToEdit={adminStoryToEdit}
+            onSaveStory={handleSaveStory}
+            onDeleteStory={handleDeleteStory}
+            user={user}
+          />
+        )}
+
+        {/* Field Work & Operations Assignment Hub (Admin -> Management -> Volunteer Hierarchy) */}
+        {isWorkAssignmentModalOpen && (
+          <WorkAssignmentModal
+            isOpen={isWorkAssignmentModalOpen}
+            onClose={() => setIsWorkAssignmentModalOpen(false)}
+            currentUser={user}
+            user={user}
+            assignments={workAssignments}
+            tasks={workAssignments}
+            onAddAssignment={handleAddWorkAssignment}
+            onUpdateAssignment={handleUpdateWorkAssignment}
+            onDeleteAssignment={handleDeleteWorkAssignment}
+            onAddTask={handleAddWorkAssignment}
+            onUpdateTask={handleUpdateWorkAssignment}
+            onDeleteTask={handleDeleteWorkAssignment}
+            onLogVolunteerHours={handleLogVolunteerHours}
+          />
+        )}
+
+        {/* Corporate CSR & Institutional Giving Suite Modal */}
+        {isCSRModalOpen && (
+          <CorporateCSRModal
+            isOpen={isCSRModalOpen}
+            onClose={() => setIsCSRModalOpen(false)}
+            user={user}
+            projects={projects}
+          />
+        )}
+
+        {/* Instant Form 10BE / Section 80G Statutory Tax Exemption Certificate Modal */}
+        {isTaxCertModalOpen && (
+          <TaxExemptionModal
+            isOpen={isTaxCertModalOpen}
+            onClose={() => setIsTaxCertModalOpen(false)}
+            user={user}
+            donation={donations[0] || null}
+          />
+        )}
+
+        {/* Village Offline Field Sync & PWA Service Worker Console Modal */}
+        {isOfflineSyncModalOpen && (
+          <OfflineSyncModal
+            isOpen={isOfflineSyncModalOpen}
+            onClose={() => setIsOfflineSyncModalOpen(false)}
+          />
+        )}
+
+        {/* Content & Work Approval Workflow Pipeline Modal (Admin -> Mgmt -> Volunteer -> Public) */}
+        {isApprovalPipelineOpen && (
+          <ContentApprovalPipelineModal
+            isOpen={isApprovalPipelineOpen}
+            onClose={() => setIsApprovalPipelineOpen(false)}
+            currentUser={user}
+            onContentPublished={handleContentPublished}
+          />
+        )}
+
+        {/* Admin User Management & Role Promotion Console Modal (Admin Only) */}
+        {isAdmin && isAdminUserManagementOpen && (
+          <AdminUserManagementModal
+            isOpen={isAdminUserManagementOpen}
+            onClose={() => setIsAdminUserManagementOpen(false)}
+            currentUser={user}
+            onUserUpdated={(updatedUser) => {
+              if (user.id === updatedUser.id || user.email.toLowerCase() === updatedUser.email.toLowerCase()) {
+                handleSetUser(updatedUser);
+              }
+            }}
+          />
+        )}
+
+        {/* Official Organization Profile, Mission & Statutory Transparency Modal */}
+        {isAboutOrgOpen && (
+          <AboutOrganizationModal
+            isOpen={isAboutOrgOpen}
+            onClose={() => setIsAboutOrgOpen(false)}
+            onNavigateDonate={() => {
+              setIsAboutOrgOpen(false);
+              handleNavigate('donate');
+            }}
+            onNavigateVolunteer={() => {
+              setIsAboutOrgOpen(false);
+              handleNavigate('volunteer');
+            }}
+          />
+        )}
+
+        {/* Statutory Legal Governance & 8 NGO Statutory Policies Modal */}
+        {isLegalPoliciesOpen && (
+          <LegalPoliciesModal
+            isOpen={isLegalPoliciesOpen}
+            onClose={() => setIsLegalPoliciesOpen(false)}
+            initialPolicyId={selectedPolicyId}
+          />
+        )}
+      </Suspense>
       </DeviceFrame>
     </AuthProvider>
   );

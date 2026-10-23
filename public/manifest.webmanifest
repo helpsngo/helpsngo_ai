@@ -1,19 +1,59 @@
 {
-  "name": "Helps NGO - Field Ops & Volunteer Sync",
+  "id": "org.helpsngo.app",
+  "name": "Helps NGO - Field Operations & Giving",
   "short_name": "Helps NGO",
-  "description": "Offline-Ready Field Task Sync & Volunteer Management for Rural Village Operations",
+  "description": "HELPS Welfare Society official mobile application. Real-time field ops, 80G instant tax-exempt receipts, volunteer hour logging, and village humanitarian projects.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#ffffff",
   "theme_color": "#ea580c",
-  "orientation": "portrait-primary",
-  "categories": ["social", "humanitarian", "productivity"],
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["social", "humanitarian", "productivity", "lifestyle"],
   "icons": [
     {
-      "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='128' fill='%23ea580c'/%3E%3Cpath d='M256 120c-55 0-100 45-100 100 0 70 100 172 100 172s100-102 100-172c0-55-45-100-100-100zm0 135c-19.3 0-35-15.7-35-35s15.7-35 35-35 35 15.7 35 35-15.7 35-35 35z' fill='%23ffffff'/%3E%3Cpath d='M160 360l-40 40m232-40l40 40' stroke='%23ffffff' stroke-width='32' stroke-linecap='round'/%3E%3C/svg%3E",
-      "sizes": "192x192 512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "shortcuts": [
+    {
+      "name": "Donate",
+      "short_name": "Donate",
+      "description": "Make an 80G tax-exempt donation",
+      "url": "/?tab=donate",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Volunteer Tasks",
+      "short_name": "Tasks",
+      "description": "Field operations & volunteer tasks",
+      "url": "/?tab=volunteer",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Certificates",
+      "short_name": "Certificates",
+      "description": "Access your volunteer and honors certificates",
+      "url": "/?tab=profile",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "/pwa-192x192.png" }]
+    }
+  ],
+  "prefer_related_applications": false
 }

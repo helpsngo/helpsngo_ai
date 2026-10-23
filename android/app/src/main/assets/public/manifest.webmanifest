@@ -1,0 +1,59 @@
+{
+  "id": "org.helpsngo.app",
+  "name": "Helps NGO - Field Operations & Giving",
+  "short_name": "Helps NGO",
+  "description": "HELPS Welfare Society official mobile application. Real-time field ops, 80G instant tax-exempt receipts, volunteer hour logging, and village humanitarian projects.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#ffffff",
+  "theme_color": "#ea580c",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["social", "humanitarian", "productivity", "lifestyle"],
+  "icons": [
+    {
+      "src": "/pwa-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/pwa-maskable-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Donate",
+      "short_name": "Donate",
+      "description": "Make an 80G tax-exempt donation",
+      "url": "/?tab=donate",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Volunteer Tasks",
+      "short_name": "Tasks",
+      "description": "Field operations & volunteer tasks",
+      "url": "/?tab=volunteer",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "My Certificates",
+      "short_name": "Certificates",
+      "description": "Access your volunteer and honors certificates",
+      "url": "/?tab=profile",
+      "icons": [{ "src": "/pwa-192x192.png", "sizes": "/pwa-192x192.png" }]
+    }
+  ],
+  "prefer_related_applications": false
+}

@@ -24,7 +24,8 @@ import {
   FileCheck2,
   GitBranch,
   Building2,
-  FileText
+  FileText,
+  Smartphone
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -38,7 +39,19 @@ import {
 } from 'recharts';
 import { ImpactMilestones } from './ImpactMilestones';
 import { WorkAssignment } from '../types';
-import { MessageSquare, Users } from 'lucide-react';
+import { MessageSquare, Users, Lock, CheckCircle2 } from 'lucide-react';
+import { 
+  ADMIN_USER, 
+  MANAGEMENT_USER, 
+  VOLUNTEER_USER, 
+  INITIAL_USER 
+} from '../data/mockData';
+import { 
+  PublicProfileBadgesShelf, 
+  BadgesSystemSection, 
+  VirtualMedalDetailModal, 
+  VirtualMedal 
+} from './BadgesSystem';
 
 interface ProfileScreenProps {
   user: UserProfile;
@@ -53,6 +66,7 @@ interface ProfileScreenProps {
   onAddNewProject?: () => void;
   onEditStats?: () => void;
   onOpenAuth?: () => void;
+  onSelectUser?: (user: UserProfile) => void;
   workAssignments?: WorkAssignment[];
   onOpenWorkAssignments?: () => void;
   onOpenWebhooks?: () => void;
@@ -60,7 +74,6 @@ interface ProfileScreenProps {
   onOpenAdminCertControl?: () => void;
   onOpenUserManagement?: () => void;
   onOpenAboutOrg?: () => void;
-  onOpenHierarchy?: () => void;
   onOpenTaxCert?: () => void;
   onOpenCorporateCSR?: () => void;
 }
@@ -114,14 +127,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenAboutOrg,
   onOpenHierarchy,
   onOpenTaxCert,
-  onOpenCorporateCSR
+  onOpenCorporateCSR,
+  onOpenPlayStoreExport,
+  onSelectUser
 }) => {
   const [showAllHistory, setShowAllHistory] = useState<boolean>(false);
+  const [selectedMedal, setSelectedMedal] = useState<VirtualMedal | null>(null);
+  const badgesSectionRef = React.useRef<HTMLDivElement | null>(null);
+
+  const handleScrollToBadges = () => {
+    if (badgesSectionRef.current) {
+      badgesSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   const isGuest = !user || user.role === 'guest';
-  const isAdmin = user?.role === 'admin';
-  const isManagement = user?.role === 'management';
+  const isAdmin = user?.role === 'admin' || user?.role === 'super_admin';
+  const isManagement = user?.role === 'management' || user?.role === 'program_manager' || user?.role === 'finance_manager' || user?.role === 'content_manager';
   const isVolunteer = user?.role === 'volunteer';
   const isDonor = user?.role === 'donor';
+  const isApplicant = user?.role === 'volunteer_applicant';
 
   // Filter donations strictly belonging to this user (or all if admin)
   const userDonations = useMemo(() => {
@@ -241,6 +266,171 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
   const displayedDonations = showAllHistory ? userDonations : userDonations.slice(0, 3);
 
+  // =========================================================================
+  // PUBLIC / GUEST VIEW: HIDE ALL INTERNAL METRICS, BADGES, AND ADMIN TOOLS
+  // Display only the clean, high-trust Authority Access & Sign-In Portal
+  // =========================================================================
+  if (isGuest) {
+    return (
+      <div className="pb-12 p-3.5 sm:p-4 space-y-4 animate-fadeIn max-w-2xl mx-auto text-gray-900 dark:text-gray-100">
+        {/* Authority Access Portal */}
+        <section className="bg-gradient-to-br from-slate-900 via-zinc-900 to-slate-950 text-white rounded-[2rem] p-6 sm:p-8 shadow-xl border border-zinc-800 relative overflow-hidden text-center space-y-5">
+          {/* Background glowing accents */}
+          <div className="absolute top-0 right-0 w-60 h-60 bg-orange-600/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute bottom-0 left-0 w-60 h-60 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="relative z-10 space-y-3">
+            <div className="w-16 h-16 rounded-3xl bg-gradient-to-br from-orange-500 to-amber-600 text-white mx-auto flex items-center justify-center shadow-lg shadow-orange-500/20 border border-orange-400/30">
+              <ShieldCheck className="w-8 h-8" />
+            </div>
+
+            <div>
+              <span className="text-[10px] font-black uppercase tracking-widest bg-orange-500/20 text-orange-400 border border-orange-500/30 px-3 py-1 rounded-full inline-block mb-1.5">
+                Authorized Personnel & Supporter Portal
+              </span>
+              <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white">
+                Sign In as per Your Authority
+              </h2>
+              <p className="text-xs sm:text-sm text-zinc-400 max-w-md mx-auto leading-relaxed mt-1">
+                To protect beneficiary privacy and statutory records, all internal workspaces, task assignments, and philanthropic portfolios are restricted to authorized accounts.
+              </p>
+            </div>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="relative z-10 pt-1 flex flex-col sm:flex-row items-center justify-center gap-2.5">
+            {onOpenAuth && (
+              <button
+                type="button"
+                id="portal-sign-in-btn"
+                onClick={onOpenAuth}
+                className="w-full sm:w-auto bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 active:scale-95 text-white font-black text-xs uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-orange-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <LogIn className="w-4 h-4" />
+                <span>Sign In with Credentials / OTP</span>
+              </button>
+            )}
+
+            {onOpenAuth && (
+              <button
+                type="button"
+                id="portal-register-btn"
+                onClick={onOpenAuth}
+                className="w-full sm:w-auto bg-zinc-800 hover:bg-zinc-700 text-zinc-200 border border-zinc-700 font-bold text-xs uppercase tracking-wider py-3.5 px-5 rounded-2xl flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>Register for Authority</span>
+              </button>
+            )}
+          </div>
+
+          {/* Authority Role Capabilities Matrix */}
+          <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-left text-xs pt-2">
+            <div 
+              onClick={onOpenAuth}
+              className="p-3.5 bg-zinc-800/60 hover:bg-zinc-800/90 rounded-2xl border border-zinc-700/60 hover:border-purple-500/60 space-y-1 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-purple-400 font-extrabold text-[11px] uppercase tracking-wider">
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
+                  <span>Trustee Administration</span>
+                </div>
+                <span className="text-[9px] bg-purple-950 text-purple-300 px-1.5 py-0.5 rounded border border-purple-800/60">Full Control</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">
+                Full statutory governance, user role directory, approval pipelines &amp; 80G financial audits.
+              </p>
+            </div>
+
+            <div 
+              onClick={onOpenAuth}
+              className="p-3.5 bg-zinc-800/60 hover:bg-zinc-800/90 rounded-2xl border border-zinc-700/60 hover:border-blue-500/60 space-y-1 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-blue-400 font-extrabold text-[11px] uppercase tracking-wider">
+                  <Briefcase className="w-4 h-4 shrink-0" />
+                  <span>Operations Management</span>
+                </div>
+                <span className="text-[9px] bg-blue-950 text-blue-300 px-1.5 py-0.5 rounded border border-blue-800/60">Field Lead</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">
+                Field task dispatching, logistics supervision, and ground verification review.
+              </p>
+            </div>
+
+            <div 
+              onClick={onOpenAuth}
+              className="p-3.5 bg-zinc-800/60 hover:bg-zinc-800/90 rounded-2xl border border-zinc-700/60 hover:border-emerald-500/60 space-y-1 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-emerald-400 font-extrabold text-[11px] uppercase tracking-wider">
+                  <HeartHandshake className="w-4 h-4 shrink-0" />
+                  <span>Field Volunteer</span>
+                </div>
+                <span className="text-[9px] bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-800/60">Field Ops</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">
+                Assigned village center tasks, digital attendance checklists, and official service certificates.
+              </p>
+            </div>
+
+            <div 
+              onClick={onOpenAuth}
+              className="p-3.5 bg-zinc-800/60 hover:bg-zinc-800/90 rounded-2xl border border-zinc-700/60 hover:border-amber-500/60 space-y-1 transition-all cursor-pointer group"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5 text-amber-400 font-extrabold text-[11px] uppercase tracking-wider">
+                  <Award className="w-4 h-4 shrink-0" />
+                  <span>Verified Donor</span>
+                </div>
+                <span className="text-[9px] bg-amber-950 text-amber-300 px-1.5 py-0.5 rounded border border-amber-800/60">Benefactor</span>
+              </div>
+              <p className="text-[10px] text-zinc-400 leading-tight">
+                80G Form 10BE tax exemption certificates, signed citations &amp; virtual medals portfolio.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Public Transparency: Official Entity & Statutory Registration */}
+        {onOpenAboutOrg && (
+          <div 
+            onClick={onOpenAboutOrg}
+            className="p-4 rounded-2xl bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 flex items-center justify-between hover:border-orange-400 transition-all cursor-pointer shadow-xs group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-orange-100 dark:bg-orange-950/60 text-orange-600 dark:text-orange-400 flex items-center justify-center font-bold flex-shrink-0">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <div className="text-left">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-orange-100 dark:bg-orange-950 text-orange-800 dark:text-orange-300 px-1.5 py-0.2 rounded">
+                    Official Entity
+                  </span>
+                  <span className="text-[10px] text-gray-500 font-medium">Est. 2016</span>
+                </div>
+                <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                  HELPS Welfare Society (Official Registry)
+                </h4>
+                <p className="text-[10px] text-gray-500">
+                  Societies Act XXI 1860 • 12A / 80G Certified • Ludhiana, Punjab
+                </p>
+              </div>
+            </div>
+
+            <span className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+              <span>View Data</span>
+              <ChevronRight className="w-4 h-4" />
+            </span>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // AUTHENTICATED USER DASHBOARD (SHOWN STRICTLY AS PER AUTHORITY)
+  // =========================================================================
   return (
     <div className="pb-8 p-3.5 sm:p-4 space-y-4 animate-fadeIn">
       {/* Bento Profile Overview Tile */}
@@ -277,9 +467,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
                 : isVolunteer
                 ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                : !isGuest
-                ? 'bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-300 border-orange-200 dark:border-orange-800'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-700'
+                : 'bg-orange-50 dark:bg-orange-950/60 text-orange-600 dark:text-orange-300 border-orange-200 dark:border-orange-800'
             }`}>
               {user?.role === 'super_admin'
                 ? '👑 Super Admin (Full Governance)'
@@ -295,9 +483,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 ? '⏳ Volunteer Applicant (Pending Trustee Verification)'
                 : isVolunteer 
                 ? '🤝 Field Volunteer (Assigned Tasks)' 
-                : !isGuest 
-                ? '👤 Registered Donor' 
-                : '🌐 Public / Guest Mode'}
+                : '👤 Verified Philanthropic Donor'}
             </span>
             {user?.authProvider === 'otp' && (
               <span className="inline-flex items-center gap-1 bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 text-[10px] font-bold uppercase tracking-wider px-3 py-1 rounded-full shadow-2xs">
@@ -313,11 +499,21 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               80G Tax Exemption
             </span>
           </div>
+
+          {/* Public Profile Badges & Medals Shelf (Only for donors and admins) */}
+          {(isDonor || isAdmin) && (
+            <PublicProfileBadgesShelf
+              user={user}
+              donations={donations}
+              onSelectMedal={(m) => setSelectedMedal(m)}
+              onViewAllBadges={handleScrollToBadges}
+            />
+          )}
         </div>
       </section>
 
       {/* Volunteer Applicant Pending Notice Banner */}
-      {user.role === 'volunteer_applicant' && (
+      {isApplicant && (
         <section className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700 text-amber-900 dark:text-amber-200 rounded-[2rem] p-5 sm:p-6 shadow-sm space-y-3 relative overflow-hidden animate-fadeIn">
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-2xl bg-amber-200 dark:bg-amber-900 text-amber-800 dark:text-amber-200 flex items-center justify-center font-bold flex-shrink-0">
@@ -336,46 +532,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
               <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed">
                 In compliance with <strong>Audit Point 3 & Statutory Child Safeguarding</strong> protocols, newly registered volunteer accounts are placed in the Trustee Verification Queue for ID and background verification before live field deployment privileges are granted.
               </p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Guest Mode Callout (When in Guest/Public mode) */}
-      {isGuest && onOpenAuth && (
-        <section className="bg-gradient-to-br from-orange-500 via-orange-600 to-orange-700 text-white rounded-[2rem] p-5 sm:p-6 shadow-md space-y-3 relative overflow-hidden animate-fadeIn">
-          <div className="relative z-10 space-y-2.5">
-            <div className="flex items-center gap-2">
-              <span className="bg-white/20 p-1 rounded-lg text-white">
-                <Sparkles className="w-4 h-4" />
-              </span>
-              <span className="text-[10px] font-extrabold uppercase tracking-widest text-orange-100">
-                Welcome to Helps NGO
-              </span>
-            </div>
-            <h3 className="text-base sm:text-lg font-black leading-tight">
-              Sign In or Create an Account
-            </h3>
-            <p className="text-xs text-orange-100 leading-relaxed max-w-md">
-              Create an account as <strong>Management</strong>, <strong>Donor</strong>, or <strong>Volunteer</strong> to track contributions, claim 80G tax certificates, or manage grassroots relief drives.
-            </p>
-            <div className="pt-2 flex flex-wrap gap-2.5">
-              <button
-                id="guest-signin-btn"
-                onClick={onOpenAuth}
-                className="bg-white text-orange-700 hover:bg-orange-50 active:scale-95 text-xs font-black uppercase tracking-wider px-4 py-2 rounded-full shadow-xs flex items-center gap-1.5 transition-all"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In with Credentials</span>
-              </button>
-              <button
-                id="guest-register-btn"
-                onClick={onOpenAuth}
-                className="bg-orange-800/80 hover:bg-orange-900 text-white text-xs font-bold uppercase tracking-wider px-4 py-2 rounded-full border border-white/20 flex items-center gap-1.5 transition-all"
-              >
-                <UserPlus className="w-3.5 h-3.5" />
-                <span>Create New Account</span>
-              </button>
             </div>
           </div>
         </section>
@@ -931,6 +1087,15 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </section>
 
           {/* Personal Impact Milestones & Visual Badges */}
+          <div ref={badgesSectionRef}>
+            <BadgesSystemSection
+              user={user}
+              donations={donations}
+              onNavigate={onNavigate}
+              onSelectMedal={(m) => setSelectedMedal(m)}
+            />
+          </div>
+
           <ImpactMilestones user={user} donations={donations} />
 
           {/* Bento Donation History Section */}
@@ -1130,6 +1295,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           </button>
         )}
       </div>
+
+      {/* Virtual Medal Detail & Honor Certificate Modal */}
+      <VirtualMedalDetailModal
+        medal={selectedMedal}
+        onClose={() => setSelectedMedal(null)}
+        onDonateToUnlock={() => onNavigate('donate')}
+      />
     </div>
   );
 };

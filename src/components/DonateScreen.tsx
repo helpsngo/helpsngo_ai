@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense, lazy } from 'react';
 import { Project, PaymentMethodType, DonationRecord, DonationJourneyStep, UserProfile } from '../types';
 import { INITIAL_PROJECTS, ORGANIZATION_INFO } from '../data/mockData';
 import { 
@@ -36,14 +36,21 @@ import {
   ChevronRight,
   Receipt,
   FileCheck2,
-  TrendingUp
+  TrendingUp,
+  Camera,
+  ScanLine,
+  Landmark,
+  Zap
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { dispatchWebhookEvent } from '../services/webhookService';
 import { useTranslation } from '../i18n/I18nContext';
 import { DynamicUpiQrCode } from './DynamicUpiQrCode';
-import { AppreciationLetterModal } from './AppreciationLetterModal';
-import { ShareModal } from './ShareModal';
+import { QrCodeScannerModal, ScannedDonationData } from './QrCodeScannerModal';
+import { NgoBankAccountQrModal } from './NgoBankAccountQrModal';
+
+const AppreciationLetterModal = lazy(() => import('./AppreciationLetterModal').then(m => ({ default: m.AppreciationLetterModal })));
+const ShareModal = lazy(() => import('./ShareModal').then(m => ({ default: m.ShareModal })));
 
 interface DonateScreenProps {
   selectedProject?: Project | null;
@@ -107,6 +114,11 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
   // Modals state
   const [isAppreciationModalOpen, setIsAppreciationModalOpen] = useState<boolean>(false);
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
+
+  // QR Scanner & Bank Account QR Modals
+  const [isCameraScannerOpen, setIsCameraScannerOpen] = useState<boolean>(false);
+  const [isNgoBankQrOpen, setIsNgoBankQrOpen] = useState<boolean>(false);
+  const [scannedFeedback, setScannedFeedback] = useState<{ title: string; subtitle: string } | null>(null);
 
   // Update selected program if prop changes
   useEffect(() => {
@@ -243,6 +255,62 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
     }
   };
 
+  const handleScannedDonation = (data: ScannedDonationData) => {
+    if (data.amount && data.amount > 0) {
+      setSelectedAmount(data.amount);
+      setCustomAmount(String(data.amount));
+    }
+    if (data.projectId) {
+      setSelectedProgramId(data.projectId);
+    }
+    setScannedFeedback({
+      title: `QR Scanned: ${data.currency || '₹'}${data.amount || 1000} for ${data.purpose || 'Grassroots Initiative'}`,
+      subtitle: `Verified Payee: ${data.payeeName}`
+    });
+    // Move directly to payment step for quick frictionless donation!
+    setCurrentStep('payment');
+    setTimeout(() => {
+      setScannedFeedback(null);
+    }, 6000);
+  };
+
+  const handleDirectBankDonationSubmitted = (donationPartial: Partial<DonationRecord>) => {
+    const receiptNo = `HLP-80G-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const letterNo = `HELPS/LTR/${new Date().getFullYear()}/${Math.floor(10000 + Math.random() * 90000)}`;
+
+    const newRecord: DonationRecord = {
+      id: `DON-${Math.floor(10000 + Math.random() * 90000)}`,
+      title: donationPartial.title || 'Direct Bank Wire (ICICI Current A/C)',
+      date: new Date().toLocaleDateString('en-IN', { month: 'short', day: '2-digit', year: 'numeric' }),
+      amount: donationPartial.amount || effectiveAmount || 1000,
+      currency: donationPartial.currency || '₹',
+      category: donationPartial.category || 'General Relief',
+      status: 'Completed',
+      receiptNumber: receiptNo,
+      isMonthly: false,
+      paymentMethod: `Direct Bank Wire (ICICI Current A/C • UTR: ${donationPartial.utrNumber || 'BANK-DIRECT'})`,
+      taxDeductible: true,
+      donorEmail: (donationPartial.donorEmail || donorEmail || 'supporter@helpsngo.in').trim(),
+      donorName: (donationPartial.donorName || donorName || 'Generous Supporter').trim(),
+      donorTaxId: (donationPartial.donorTaxId || donorPan || 'ABCDE1234F').trim().toUpperCase(),
+      donorPhone: donorPhone.trim(),
+      donorAddress: donorAddress.trim(),
+      donorPincode: donorPincode.trim(),
+      donorCitizenship: 'indian',
+      appreciationLetterId: letterNo,
+      appreciationSignedBy: 'Amarjeet Kumar, Managing Director',
+      transactionHash: `0x${Math.random().toString(16).substring(2, 10)}${Math.random().toString(16).substring(2, 10)}`,
+      utrNumber: donationPartial.utrNumber || `UTR-${Date.now()}`,
+      impactMilestone: 'Allocated to Ludhiana Field Relief Unit',
+      approvalStatus: 'approved'
+    };
+
+    triggerCelebration();
+    setCompletedDonation(newRecord);
+    onDonationSuccess(newRecord);
+    setCurrentStep('confirmation');
+  };
+
   return (
     <div className="pb-12 p-3 sm:p-4 space-y-4 animate-fadeIn text-gray-900 dark:text-gray-100 max-w-2xl mx-auto">
       
@@ -309,7 +377,76 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
       {/* ========================================================================= */}
       {currentStep === 'amount' && (
         <div className="space-y-4 animate-fadeIn">
-          
+
+          {/* Scanned QR Notification Banner */}
+          {scannedFeedback && (
+            <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-2xl flex items-center justify-between gap-2 shadow-xs text-xs animate-fadeIn">
+              <div className="flex items-center gap-2.5">
+                <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+                <div>
+                  <p className="font-extrabold text-emerald-900 dark:text-emerald-200">{scannedFeedback.title}</p>
+                  <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium">{scannedFeedback.subtitle}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setScannedFeedback(null)}
+                className="text-gray-400 hover:text-gray-600 text-sm font-bold px-1.5 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
+          {/* Quick QR Giving Action Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            {/* Option A: Scan QR to Donate */}
+            <button
+              type="button"
+              onClick={() => setIsCameraScannerOpen(true)}
+              className="p-3.5 bg-gradient-to-br from-orange-500 to-amber-600 text-white rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between text-left group cursor-pointer active:scale-98"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                  <Camera className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black uppercase tracking-wider">Scan QR to Donate</span>
+                    <span className="bg-white/25 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">Camera</span>
+                  </div>
+                  <p className="text-[10px] text-orange-100 mt-0.5 leading-tight">
+                    Scan any UPI or campaign QR with camera to make a quick donation
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-orange-200 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1" />
+            </button>
+
+            {/* Option B: NGO Bank Account QR */}
+            <button
+              type="button"
+              onClick={() => setIsNgoBankQrOpen(true)}
+              className="p-3.5 bg-gradient-to-br from-slate-900 via-indigo-950 to-blue-900 text-white rounded-2xl shadow-sm hover:shadow-md transition-all flex items-center justify-between text-left group cursor-pointer active:scale-98"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-white/10 backdrop-blur-xs flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform shadow-xs">
+                  <Building2 className="w-5 h-5 text-amber-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs font-black uppercase tracking-wider">NGO Bank Account QR</span>
+                    <span className="bg-emerald-400 text-slate-900 text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">Official</span>
+                  </div>
+                  <p className="text-[10px] text-blue-200 mt-0.5 leading-tight">
+                    Generate official Bank QR code for ICICI Current A/C, NEFT or IMPS wire
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-blue-200 group-hover:translate-x-0.5 transition-transform shrink-0 ml-1" />
+            </button>
+          </div>
+
           {/* Preset Amounts Card */}
           <section className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-3xl p-5 shadow-xs space-y-4">
             <div className="flex items-center justify-between">
@@ -810,6 +947,32 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
             })}
           </div>
 
+          {/* Quick QR Utilities Bar */}
+          <div className="flex flex-col sm:flex-row items-center gap-2 p-2.5 bg-gray-50 dark:bg-gray-800/80 rounded-2xl border border-gray-200 dark:border-gray-700 text-xs">
+            <span className="text-[10px] uppercase font-bold text-gray-400 dark:text-gray-500 self-start sm:self-center px-1">
+              Alternative Options:
+            </span>
+            <div className="grid grid-cols-2 gap-2 w-full flex-1">
+              <button
+                type="button"
+                onClick={() => setIsCameraScannerOpen(true)}
+                className="py-2 px-3 bg-white dark:bg-gray-700 hover:bg-orange-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-800 dark:text-gray-200 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs text-[11px]"
+              >
+                <Camera className="w-3.5 h-3.5 text-orange-600" />
+                <span>Scan Camera QR</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsNgoBankQrOpen(true)}
+                className="py-2 px-3 bg-white dark:bg-gray-700 hover:bg-blue-50 dark:hover:bg-gray-600 border border-gray-200 dark:border-gray-600 rounded-xl text-gray-800 dark:text-gray-200 font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-2xs text-[11px]"
+              >
+                <Building2 className="w-3.5 h-3.5 text-blue-600" />
+                <span>NGO Bank QR & Wire</span>
+              </button>
+            </div>
+          </div>
+
           {/* Method A: Dynamic UPI QR & Intent */}
           {(paymentMethod === 'qr' || paymentMethod === 'upi') && (
             <DynamicUpiQrCode
@@ -1264,29 +1427,48 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
         </div>
       )}
 
-      {/* Formal Letter of Appreciation Modal */}
-      {isAppreciationModalOpen && completedDonation && (
-        <AppreciationLetterModal
-          donation={completedDonation}
-          isOpen={isAppreciationModalOpen}
-          onClose={() => setIsAppreciationModalOpen(false)}
-          onViewImpactUpdate={() => {
-            setIsAppreciationModalOpen(false);
-            setCurrentStep('impact');
-          }}
-        />
-      )}
+      {/* Dynamic Lazy Modals */}
+      <Suspense fallback={null}>
+        {/* Formal Letter of Appreciation Modal */}
+        {isAppreciationModalOpen && completedDonation && (
+          <AppreciationLetterModal
+            donation={completedDonation}
+            isOpen={isAppreciationModalOpen}
+            onClose={() => setIsAppreciationModalOpen(false)}
+            onViewImpactUpdate={() => {
+              setIsAppreciationModalOpen(false);
+              setCurrentStep('impact');
+            }}
+          />
+        )}
 
-      {/* Share Impact Modal */}
-      {showShareModal && (
-        <ShareModal
-          isOpen={showShareModal}
-          onClose={() => setShowShareModal(false)}
-          shareTitle="I just donated to HELPS Welfare Society!"
-          shareText="I supported grassroots child education and healthcare with HELPS Welfare Society (100% 80G tax exempt). Join me in making a difference!"
-          shareUrl="https://helpsngo.in/"
-        />
-      )}
+        {/* Share Impact Modal */}
+        {showShareModal && (
+          <ShareModal
+            isOpen={showShareModal}
+            onClose={() => setShowShareModal(false)}
+            shareTitle="I just donated to HELPS Welfare Society!"
+            shareText="I supported grassroots child education and healthcare with HELPS Welfare Society (100% 80G tax exempt). Join me in making a difference!"
+            shareUrl="https://helpsngo.in/"
+          />
+        )}
+      </Suspense>
+
+      {/* Interactive Camera QR Code Scanner Modal */}
+      <QrCodeScannerModal
+        isOpen={isCameraScannerOpen}
+        onClose={() => setIsCameraScannerOpen(false)}
+        onDonationDetected={handleScannedDonation}
+        availableProjects={allProjectsList}
+      />
+
+      {/* NGO Bank Account QR Code Generator & Wire Details Modal */}
+      <NgoBankAccountQrModal
+        isOpen={isNgoBankQrOpen}
+        onClose={() => setIsNgoBankQrOpen(false)}
+        onDirectBankDonationSubmitted={handleDirectBankDonationSubmitted}
+        initialAmount={effectiveAmount > 0 ? effectiveAmount : 1000}
+      />
 
     </div>
   );

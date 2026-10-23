@@ -41,15 +41,13 @@ interface AdminUserManagementModalProps {
   onClose: () => void;
   currentUser: UserProfile;
   onUserUpdated?: (updatedUser: UserProfile) => void;
-  onOpenHierarchy?: () => void;
 }
 
 export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> = ({
   isOpen,
   onClose,
   currentUser,
-  onUserUpdated,
-  onOpenHierarchy
+  onUserUpdated
 }) => {
   const [activeTab, setActiveTab] = useState<'directory' | 'applicants'>('directory');
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -319,18 +317,6 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
                 <option value="on_hold">On Hold</option>
                 <option value="rejected">Rejected</option>
               </select>
-            )}
-
-            {onOpenHierarchy && (
-              <button
-                type="button"
-                onClick={onOpenHierarchy}
-                className="px-3 py-2 bg-purple-100 dark:bg-purple-950 hover:bg-purple-200 dark:hover:bg-purple-900 text-purple-800 dark:text-purple-200 border border-purple-300 dark:border-purple-800 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap"
-                title="View complete 5-Tier Organizational Hierarchy & Permissions"
-              >
-                <GitBranch className="w-3.5 h-3.5" />
-                <span className="hidden sm:inline">Hierarchy Matrix</span>
-              </button>
             )}
           </div>
         </div>

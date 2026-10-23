@@ -62,9 +62,13 @@ export const ReceiptModal: React.FC<ReceiptModalProps> = ({
     }, 400);
   };
 
+  const isOwner = Boolean(user?.email && donation.donorEmail && user.email.toLowerCase() === donation.donorEmail.toLowerCase());
+  const isAdminOrFinance = user?.role === 'admin' || user?.role === 'management' || user?.role === 'finance';
+  const shouldMaskPan = !isOwner && !isAdminOrFinance;
+  const rawTaxId = donation.donorTaxId || user?.taxId || 'PAN-VERIFIED';
+  const donorDisplayTaxId = shouldMaskPan && rawTaxId.length === 10 ? 'XXXXX' + rawTaxId.slice(-4) : rawTaxId;
   const donorDisplayName = donation.donorName || user?.name || 'Generous Supporter';
   const donorDisplayEmail = donation.donorEmail || user?.email || 'donor@helpsngo.in';
-  const donorDisplayTaxId = donation.donorTaxId || user?.taxId || 'PAN-VERIFIED';
 
   return (
     <>

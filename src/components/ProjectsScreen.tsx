@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, Suspense, lazy } from 'react';
 import { Project, UserProfile } from '../types';
 import { Search, Filter, Sparkles, CheckCircle2, Share2, Plus, Edit3, ShieldCheck } from 'lucide-react';
-import { ShareModal, ShareContent } from './ShareModal';
+import type { ShareContent } from './ShareModal';
+
+const ShareModal = lazy(() => import('./ShareModal').then(m => ({ default: m.ShareModal })));
 
 interface ProjectsScreenProps {
   projects: Project[];
@@ -303,11 +305,15 @@ export const ProjectsScreen: React.FC<ProjectsScreenProps> = ({
       </div>
 
       {/* Social Media Sharing Modal */}
-      <ShareModal
-        isOpen={Boolean(shareItem)}
-        onClose={() => setShareItem(null)}
-        content={shareItem}
-      />
+      {Boolean(shareItem) && (
+        <Suspense fallback={null}>
+          <ShareModal
+            isOpen={Boolean(shareItem)}
+            onClose={() => setShareItem(null)}
+            content={shareItem}
+          />
+        </Suspense>
+      )}
     </div>
   );
 };

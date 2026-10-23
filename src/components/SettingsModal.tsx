@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { X, User, DollarSign, Globe, ExternalLink, Check, MessageSquare, Sun, Moon, Monitor, SunMedium, MoonStar, Eye } from 'lucide-react';
+import { X, User, DollarSign, Globe, ExternalLink, Check, MessageSquare, Sun, Moon, Monitor, SunMedium, MoonStar, Eye, Smartphone } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { useTranslation } from '../i18n/I18nContext';
 import { useTheme, ThemeMode } from '../context/ThemeContext';

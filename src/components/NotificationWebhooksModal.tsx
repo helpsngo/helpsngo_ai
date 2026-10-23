@@ -52,9 +52,9 @@ export const NotificationWebhooksModal: React.FC<NotificationWebhooksModalProps>
   const [preferences, setPreferences] = useState<DonorNotificationPreferences>(() => getStoredDonorPreferences());
 
   // Test dispatcher form state
-  const [testDonorName, setTestDonorName] = useState<string>(user?.name || 'Alex Johnson');
+  const [testDonorName, setTestDonorName] = useState<string>(user?.name || 'Ananya Sharma');
   const [testPhone, setTestPhone] = useState<string>(user?.phone || '+91 98765 43210');
-  const [testEmail, setTestEmail] = useState<string>(user?.email || 'alex.johnson@example.com');
+  const [testEmail, setTestEmail] = useState<string>(user?.email || 'ananya.sharma@gmail.com');
   const [testAmount, setTestAmount] = useState<number>(5000);
   const [testProject, setTestProject] = useState<string>('Barmer Solar Borewells & Clean Water Hubs');
   const [isSending, setIsSending] = useState<boolean>(false);

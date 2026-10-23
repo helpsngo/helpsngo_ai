@@ -1,15 +1,15 @@
 import { Mission, Project, DonationRecord, UserProfile, UserRole, ImpactStory, OrgStats, FieldDispatch, WorkAssignment, TeamMember, OrganizationInfo } from '../types';
 
 export const INITIAL_USER: UserProfile = {
-  name: 'Alex Johnson',
-  email: 'alex.johnson@example.com',
+  name: 'Ananya Sharma',
+  email: 'ananya.sharma@gmail.com',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
   totalContribution: 25000,
   volunteerHours: 50,
-  volunteerLevel: 'Gold Volunteer',
+  volunteerLevel: 'Gold Supporter',
   volunteerNextTierHours: 75,
   phone: '+91 98765 43210',
-  taxId: 'ABCDE1234F',
+  taxId: 'ASPRT1234F',
   currency: '₹',
   role: 'donor',
   title: 'Generous Donor & Community Patron'
@@ -202,7 +202,7 @@ export const SEEDED_ACCOUNTS: SeedCredential[] = [
     userProfile: CONTENT_MANAGER_USER
   },
   {
-    email: 'alex.johnson@example.com',
+    email: 'ananya.sharma@gmail.com',
     password: 'donor123',
     role: 'donor',
     userProfile: INITIAL_USER
@@ -748,9 +748,9 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
     isMonthly: true,
     paymentMethod: 'UPI (alex@oksbi)',
     taxDeductible: true,
-    donorEmail: 'alex.johnson@example.com',
-    donorName: 'Alex Johnson',
-    donorTaxId: 'ABCDE1234F',
+    donorEmail: 'ananya.sharma@gmail.com',
+    donorName: 'Ananya Sharma',
+    donorTaxId: 'ASPRT1234F',
     approvalStatus: 'approved',
     approvedAt: 'Oct 26, 2023',
     approvedBy: 'Amarjeet Kumar (Founder & Director)'
@@ -765,11 +765,11 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
     status: 'Completed',
     receiptNumber: 'HLP-80G-2023-8743',
     isMonthly: false,
-    paymentMethod: 'UPI (alex@ybl)',
+    paymentMethod: 'UPI (ananya@okhdfcbank)',
     taxDeductible: true,
-    donorEmail: 'alex.johnson@example.com',
-    donorName: 'Alex Johnson',
-    donorTaxId: 'ABCDE1234F',
+    donorEmail: 'ananya.sharma@gmail.com',
+    donorName: 'Ananya Sharma',
+    donorTaxId: 'ASPRT1234F',
     approvalStatus: 'approved',
     approvedAt: 'Sep 15, 2023',
     approvedBy: 'Amarjeet Kumar (Founder & Director)'
@@ -786,9 +786,9 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
     isMonthly: false,
     paymentMethod: 'Net Banking (HDFC Bank)',
     taxDeductible: true,
-    donorEmail: 'alex.johnson@example.com',
-    donorName: 'Alex Johnson',
-    donorTaxId: 'ABCDE1234F',
+    donorEmail: 'ananya.sharma@gmail.com',
+    donorName: 'Ananya Sharma',
+    donorTaxId: 'ASPRT1234F',
     approvalStatus: 'approved',
     approvedAt: 'Aug 02, 2023',
     approvedBy: 'Amarjeet Kumar (Founder & Director)'
@@ -805,9 +805,9 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
     isMonthly: true,
     paymentMethod: 'RuPay Card (•••• 4242)',
     taxDeductible: true,
-    donorEmail: 'alex.johnson@example.com',
-    donorName: 'Alex Johnson',
-    donorTaxId: 'ABCDE1234F',
+    donorEmail: 'ananya.sharma@gmail.com',
+    donorName: 'Ananya Sharma',
+    donorTaxId: 'ASPRT1234F',
     approvalStatus: 'approved',
     approvedAt: 'Jun 18, 2023',
     approvedBy: 'Amarjeet Kumar (Founder & Director)'
@@ -824,9 +824,9 @@ export const INITIAL_DONATIONS: DonationRecord[] = [
     isMonthly: false,
     paymentMethod: 'Google Pay (UPI)',
     taxDeductible: true,
-    donorEmail: 'alex.johnson@example.com',
-    donorName: 'Alex Johnson',
-    donorTaxId: 'ABCDE1234F',
+    donorEmail: 'ananya.sharma@gmail.com',
+    donorName: 'Ananya Sharma',
+    donorTaxId: 'ASPRT1234F',
     approvalStatus: 'approved',
     approvedAt: 'Apr 10, 2023',
     approvedBy: 'Amarjeet Kumar (Founder & Director)'
