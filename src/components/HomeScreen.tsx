@@ -577,73 +577,78 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
         </div>
       </section>
 
-      {/* Field Telemetry & GIS Command Center (Public Proof of Ground Reality) */}
-      <section className="space-y-3 pt-2">
-        <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-          <div>
-            <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
-                Ground Reality & IoT Telemetry
-              </span>
+      {/* Field Telemetry & GIS Command Center (Restricted: Visible ONLY for Admin Access) */}
+      {isAdmin && (
+        <section className="space-y-3 pt-2 border-t border-purple-200 dark:border-purple-900/60 pb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+            <div>
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[10px] font-mono font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
+                  Ground Reality & IoT Telemetry
+                </span>
+                <span className="text-[9px] bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-300 font-extrabold px-2 py-0.2 rounded-full border border-purple-300 dark:border-purple-800">
+                  Admin Access Only
+                </span>
+              </div>
+              <h2 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
+                Live Field Intelligence & Borewell Telemetry
+              </h2>
             </div>
-            <h2 className="text-sm sm:text-base font-black text-gray-900 dark:text-white leading-tight">
-              Live Field Intelligence & Borewell Telemetry
-            </h2>
+
+            {/* View switcher */}
+            <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl border border-gray-200 dark:border-zinc-700">
+              <button
+                onClick={() => setActiveTelemetryTab('map')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTelemetryTab === 'map'
+                    ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Compass className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
+                <span>GIS Map</span>
+              </button>
+              <button
+                onClick={() => setActiveTelemetryTab('iot')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTelemetryTab === 'iot'
+                    ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <Radio className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
+                <span>IoT Telemetry</span>
+              </button>
+              <button
+                onClick={() => setActiveTelemetryTab('before_after')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
+                  activeTelemetryTab === 'before_after'
+                    ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
+                    : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Before & After</span>
+              </button>
+            </div>
           </div>
 
-          {/* View switcher */}
-          <div className="flex items-center gap-1 bg-gray-100 dark:bg-zinc-800 p-1 rounded-2xl border border-gray-200 dark:border-zinc-700">
-            <button
-              onClick={() => setActiveTelemetryTab('map')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTelemetryTab === 'map'
-                  ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <Compass className="w-3.5 h-3.5 text-orange-600 dark:text-orange-400" />
-              <span>GIS Map</span>
-            </button>
-            <button
-              onClick={() => setActiveTelemetryTab('iot')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTelemetryTab === 'iot'
-                  ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <Radio className="w-3.5 h-3.5 text-cyan-600 dark:text-cyan-400" />
-              <span>IoT Telemetry</span>
-            </button>
-            <button
-              onClick={() => setActiveTelemetryTab('before_after')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer ${
-                activeTelemetryTab === 'before_after'
-                  ? 'bg-white dark:bg-zinc-900 text-gray-900 dark:text-white shadow-xs'
-                  : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
-              }`}
-            >
-              <ArrowLeftRight className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-              <span>Before & After</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Dynamic Display based on Tab */}
-        {activeTelemetryTab === 'map' && (
-          <GeospatialImpactMap
-            onSelectProject={onSelectProject}
-            onDonateClick={() => onNavigate('donate')}
-          />
-        )}
-        {activeTelemetryTab === 'iot' && (
-          <IoTWaterTelemetryWidget />
-        )}
-        {activeTelemetryTab === 'before_after' && (
-          <BeforeAfterSlider />
-        )}
-      </section>
+          {/* Dynamic Display based on Tab */}
+          {activeTelemetryTab === 'map' && (
+            <GeospatialImpactMap
+              onSelectProject={onSelectProject}
+              onDonateClick={() => onNavigate('donate')}
+            />
+          )}
+          {activeTelemetryTab === 'iot' && (
+            <IoTWaterTelemetryWidget />
+          )}
+          {activeTelemetryTab === 'before_after' && (
+            <BeforeAfterSlider />
+          )}
+        </section>
+      )}
 
       {/* Admin Executive & Operations Suite (Visible ONLY to Admin after login) */}
       {isAdmin && (
