@@ -57,6 +57,7 @@ interface HomeScreenProps {
   onOpenWebhooks?: () => void;
   onOpenAboutOrg?: () => void;
   onOpenLegalPolicies?: (policyId?: string) => void;
+  onOpenRightsCenter?: () => void;
 }
 
 export const HomeScreen: React.FC<HomeScreenProps> = ({
@@ -79,7 +80,8 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
   onOpenTaxCert,
   onOpenWebhooks,
   onOpenAboutOrg,
-  onOpenLegalPolicies
+  onOpenLegalPolicies,
+  onOpenRightsCenter
 }) => {
   const isAdmin = user?.role === 'admin';
   const isManagement = user?.role === 'management';
@@ -970,6 +972,17 @@ export const HomeScreen: React.FC<HomeScreenProps> = ({
             >
               Grievance & Nodal Officer
             </button>
+            {onOpenRightsCenter && (
+              <>
+                <span>•</span>
+                <button 
+                  onClick={onOpenRightsCenter} 
+                  className="hover:text-emerald-700 font-semibold underline underline-offset-2 cursor-pointer text-emerald-800 dark:text-emerald-400"
+                >
+                  DPDP Rights Center (Sec 11-14)
+                </button>
+              </>
+            )}
           </div>
           <p className="text-[10px] text-gray-400 mt-2 font-mono">
             © 2016-2026 HELPS Welfare Society. All rights reserved. Registered under Society Registration Act XXI of 1860.

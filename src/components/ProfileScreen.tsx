@@ -25,7 +25,8 @@ import {
   GitBranch,
   Building2,
   FileText,
-  Smartphone
+  Smartphone,
+  Scale
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -76,6 +77,7 @@ interface ProfileScreenProps {
   onOpenAboutOrg?: () => void;
   onOpenTaxCert?: () => void;
   onOpenCorporateCSR?: () => void;
+  onOpenRightsCenter?: () => void;
 }
 
 interface CustomTooltipProps {
@@ -125,10 +127,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenAdminCertControl,
   onOpenUserManagement,
   onOpenAboutOrg,
-  onOpenHierarchy,
   onOpenTaxCert,
   onOpenCorporateCSR,
-  onOpenPlayStoreExport,
+  onOpenRightsCenter,
   onSelectUser
 }) => {
   const [showAllHistory, setShowAllHistory] = useState<boolean>(false);
@@ -1197,40 +1198,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </>
       )}
 
-      {/* Organizational Hierarchy & Access Connection Matrix Card */}
-      {onOpenHierarchy && (
-        <div 
-          id="profile-open-hierarchy-btn"
-          onClick={onOpenHierarchy}
-          className="p-4 rounded-2xl bg-gradient-to-r from-purple-50 via-indigo-50 to-purple-50 dark:from-purple-950/40 dark:to-indigo-950/40 border border-purple-200 dark:border-purple-800 flex items-center justify-between hover:border-purple-400 transition-all cursor-pointer shadow-xs group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-purple-700 text-white flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform shadow-2xs">
-              <GitBranch className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-purple-200/80 dark:bg-purple-900 text-purple-800 dark:text-purple-300 px-1.5 py-0.2 rounded">
-                  Chain of Command & RBAC
-                </span>
-                <span className="text-[10px] text-gray-500 font-medium">5-Tier Structure</span>
-              </div>
-              <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                Organizational Hierarchy & Access Matrix
-              </h4>
-              <p className="text-[10px] text-gray-500 dark:text-zinc-400">
-                Admin ➔ Management ➔ Volunteer ➔ Donor ➔ Guest permissions & workflow connections
-              </p>
-            </div>
-          </div>
-
-          <span className="text-xs font-bold text-purple-600 dark:text-purple-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-            <span>Inspect Flow</span>
-            <ChevronRight className="w-4 h-4" />
-          </span>
-        </div>
-      )}
-
       {/* Official NGO Profile & Statutory Registry Card */}
       {onOpenAboutOrg && (
         <div 
@@ -1259,6 +1226,39 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
           <span className="text-xs font-bold text-orange-600 dark:text-orange-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
             <span>View Data</span>
+            <ChevronRight className="w-4 h-4" />
+          </span>
+        </div>
+      )}
+
+      {/* DPDP Act 2023: Data Principal Rights & Statutory Privacy Card */}
+      {onOpenRightsCenter && (
+        <div 
+          onClick={onOpenRightsCenter}
+          className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/40 dark:to-teal-950/20 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between hover:border-emerald-400 transition-all cursor-pointer shadow-xs group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+              <Scale className="w-5 h-5" />
+            </div>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded font-mono">
+                  DPDP Act 2023
+                </span>
+                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">Statutory Privacy</span>
+              </div>
+              <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                Data Principal Rights & Privacy Center
+              </h4>
+              <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                Exercise your statutory rights: Access Summary (Sec 11), Correction, Erasure & DPO Desk
+              </p>
+            </div>
+          </div>
+
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+            <span>Manage</span>
             <ChevronRight className="w-4 h-4" />
           </span>
         </div>

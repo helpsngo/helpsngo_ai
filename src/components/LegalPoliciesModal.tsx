@@ -44,19 +44,51 @@ Users registered as field volunteers or trustees must maintain the confidentiali
   },
   {
     id: 'privacy-policy',
-    title: '2. Privacy & Data Protection (DPDP Act 2023)',
+    title: '2. Privacy & Statutory Data Protection (DPDP Act 2023)',
     category: 'Data Privacy',
-    lastUpdated: '2026-08-15',
-    version: 'v2026.3',
-    summary: 'Comprehensive compliance with the Digital Personal Data Protection (DPDP) Act 2023 and GDPR guidelines.',
-    content: `### 1. Data Collection & Purpose Limitation
-We collect minimal personal data (Name, Email, Mobile Number, Government ID Proof for verified volunteers, PAN for 80G tax receipts) strictly for non-commercial NGO operations, donor statutory compliance, and volunteer safety dispatch.
+    lastUpdated: '2026-08-25',
+    version: 'v2026.5',
+    summary: 'Comprehensive compliance with the Digital Personal Data Protection Act, 2023 (DPDP Act 2023), IT Act 2000, and CERT-In directions.',
+    content: `### 1. Data Fiduciary Identity & Scope
+**HELPS Welfare Society** (Registration No. HR/2021/0285458, NITI Aayog Darpan ID: HR/2021/0285458, Societies Registration Act XXI of 1860) operates as a registered **Data Fiduciary** under the **Digital Personal Data Protection Act, 2023 (DPDP Act 2023)**. This policy governs all personal data collected across our web portal, mobile applets, and field relief deployments in Ludhiana, Punjab, and Pan-India.
 
-### 2. Explicit Consent & Data Fiduciary Standards
-HELPS acts as a Data Fiduciary under the DPDP Act 2023. User data is never sold, leased, or monetized. Explicit consent is captured before field deployment or processing tax certificates.
+### 2. Notice & Purpose Limitation (Section 5, DPDP Act 2023)
+Personal data is collected strictly for specified, explicit, and lawful non-profit purposes:
+* **Donors:** Name, Email, Mobile Number, PAN/Tax ID (statutorily required for issuing Section 80G tax exemption certificates and filing annual Form 10BD with the Income Tax Department).
+* **Volunteers & Field Workers:** Name, Emergency Contact, Skills, Area Coordinates, and Government Identity Document verification for safe dispatch and disaster relief coordination.
+* **Beneficiaries:** Minimal health or educational progress records required to administer the AABHA digital literacy and water purification interventions.
+* Under no circumstances is personal data sold, leased, or rented to commercial brokers or third-party marketing firms.
 
-### 3. Data Subject Rights
-You retain the statutory right to request a copy of your personal records, rectify errors, or exercise the right to be forgotten (subject to mandatory 7-year statutory financial audit records). Contact: amar@helpsngo.in.`
+### 3. Affirmative Consent Architecture (Section 6, DPDP Act 2023)
+* Consent is collected prior to data processing through affirmative, un-pre-ticked action.
+* Consent is granular: essential session operations, functional personalization, automated WhatsApp tax certificates, and anonymous usage analytics can be toggled independently.
+* **Withdrawal of Consent:** You may withdraw non-statutory consent at any time through our interactive **Data Principal Rights Center** or by emailing \`compliance@helpsngo.in\`. Withdrawal takes effect immediately without punitive consequence.
+
+### 4. Technical Safeguards & Data Localization (Section 8, DPDP Act 2023)
+* **Data Localization:** All digital records and donor databases reside on secure cloud instances localized within the Republic of India.
+* **Security Controls:** Role-Based Access Control (RBAC) with Least Privilege, TLS 1.3 end-to-end transport encryption, and AES-256 database encryption.
+* **Mandatory Statutory Financial Retention:** In accordance with **Section 8(7) of the DPDP Act 2023** read with **Rule 18AB of the Income Tax Rules, 1962**, donation ledgers, donor PAN numbers, and Form 10BE certificates must be retained for seven (7) financial years for statutory auditing. Non-financial communication traces may be erased upon request.
+
+### 5. Special Protection for Children (Section 9, DPDP Act 2023)
+* HELPS prohibits behavioral tracking, targeted communications, or automated profiling of minors under 18 years of age.
+* All student enrollment in our AABHA Learning Centers requires **verifiable parental or legal guardian consent**.
+* Media containing identifiable images of minors follows POCSO Act 2012 guidelines and requires explicit guardian releases.
+
+### 6. Statutory Rights of Data Principals (Sections 11–14, DPDP Act 2023)
+Every individual whose data is processed by HELPS possesses enforceable statutory rights:
+* **Section 11 (Right to Access Summary):** You may inspect a summary of all personal data held and identities of all entities with whom it was shared.
+* **Section 12 (Right to Correction & Erasure):** You have the right to correct inaccurate data, complete incomplete records, or request complete erasure (subject to Section 8 statutory retention exceptions).
+* **Section 13 (Right of Grievance Redressal):** Immediate access to our Data Protection Officer with a guaranteed initial acknowledgment within 72 hours and resolution within 7 business days.
+* **Section 14 (Right to Nominate):** In the event of death or incapacity, you may designate a legal nominee to exercise your data principal rights.
+
+### 7. Data Protection Officer (DPO) & Statutory Redressal Desk
+* **Designated DPO:** Amarjeet Kumar, Trustee & Compliance Lead
+* **Direct Compliance Email:** compliance@helpsngo.in / amar@helpsngo.in
+* **Statutory Helpline:** +91 94729 29856
+* **Physical Secretariat:** GNDEC Campus, Gill Park, Ludhiana, Punjab 141006
+
+### 8. Escalation to the Data Protection Board of India (DPBI)
+If your grievance remains unaddressed or unresolved within statutory timelines, you have the right under **Section 13(3) of the DPDP Act 2023** to register a formal complaint with the **Data Protection Board of India (DPBI)** via \`https://dpbi.gov.in\`.`
   },
   {
     id: 'refund-cancellation',

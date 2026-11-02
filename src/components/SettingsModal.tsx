@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { X, User, DollarSign, Globe, ExternalLink, Check, MessageSquare, Sun, Moon, Monitor, SunMedium, MoonStar, Eye, Smartphone } from 'lucide-react';
+import { X, User, DollarSign, Globe, ExternalLink, Check, MessageSquare, Sun, Moon, Monitor, SunMedium, MoonStar, Eye, Smartphone, Scale, ShieldCheck, RotateCcw } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { useTranslation } from '../i18n/I18nContext';
 import { useTheme, ThemeMode } from '../context/ThemeContext';
@@ -11,13 +11,15 @@ interface SettingsModalProps {
   onUpdateUser: (updated: UserProfile) => void;
   onClose: () => void;
   onOpenWebhooks?: () => void;
+  onOpenRightsCenter?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
   user,
   onUpdateUser,
   onClose,
-  onOpenWebhooks
+  onOpenWebhooks,
+  onOpenRightsCenter
 }) => {
   const { t } = useTranslation();
   const { theme, actualTheme, isDark, setTheme, toggleTheme } = useTheme();
@@ -28,6 +30,17 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [currency, setCurrency] = useState(user.currency || '₹');
   const [donorPrefs, setDonorPrefs] = useState(() => getStoredDonorPreferences());
   const [saved, setSaved] = useState(false);
+  const [consentResetMsg, setConsentResetMsg] = useState(false);
+
+  const handleResetConsent = () => {
+    try {
+      localStorage.removeItem('helps_ngo_dpdp_consent_v1');
+      setConsentResetMsg(true);
+      setTimeout(() => setConsentResetMsg(false), 3000);
+    } catch {
+      // ignore
+    }
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
@@ -308,6 +321,63 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Statutory DPDP Act 2023 Data Privacy & Consent Preferences */}
+          <div className="bg-emerald-50/60 dark:bg-emerald-950/20 rounded-2xl p-4 border border-emerald-200 dark:border-emerald-800/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-xl bg-emerald-600 flex items-center justify-center text-white shadow-xs">
+                  <Scale className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-gray-900 dark:text-white text-xs uppercase tracking-wider">
+                    DPDP Act 2023 Privacy
+                  </h4>
+                  <p className="text-[10px] text-gray-500 dark:text-gray-400">
+                    Statutory Data Principal Rights (Sec 11-14)
+                  </p>
+                </div>
+              </div>
+              <span className="text-[9px] font-mono px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/60 text-emerald-800 dark:text-emerald-300 font-bold">
+                Protected
+              </span>
+            </div>
+
+            <p className="text-[11px] text-gray-600 dark:text-gray-300 leading-relaxed">
+              HELPS Welfare Society acts as a registered Data Fiduciary. Exercise your right to access personal data, request correction or erasure, or designate a statutory nominee.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              {onOpenRightsCenter && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onOpenRightsCenter();
+                  }}
+                  className="p-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer"
+                >
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  <span>Rights Center</span>
+                </button>
+              )}
+
+              <button
+                type="button"
+                onClick={handleResetConsent}
+                className="p-2.5 rounded-xl bg-white dark:bg-gray-800 border border-emerald-300 dark:border-emerald-700/80 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>{consentResetMsg ? 'Consent Reset!' : 'Reset Consent'}</span>
+              </button>
+            </div>
+
+            {consentResetMsg && (
+              <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium text-center animate-fadeIn">
+                Consent tokens cleared. Statutory cookie & privacy preferences will re-prompt.
+              </p>
+            )}
           </div>
 
           {/* About Helps NGO Link */}

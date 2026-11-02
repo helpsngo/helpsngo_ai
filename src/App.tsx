@@ -34,6 +34,7 @@ import { AuthProvider } from './context/AuthContext';
 import { authService } from './services/authService';
 import { submitVolunteerApplication } from './services/rbacService';
 import { mobileService } from './services/mobileService';
+import { DpdpConsentBanner } from './components/DpdpConsentBanner';
 
 // Dynamic Lazy Imports for Large Modals (Reduces initial bundle size & improves mobile load times)
 const ProjectDetailModal = lazy(() => import('./components/ProjectDetailModal').then(m => ({ default: m.ProjectDetailModal })));
@@ -56,6 +57,7 @@ const ContentApprovalPipelineModal = lazy(() => import('./components/ContentAppr
 const AdminUserManagementModal = lazy(() => import('./components/AdminUserManagementModal').then(m => ({ default: m.AdminUserManagementModal })));
 const AboutOrganizationModal = lazy(() => import('./components/AboutOrganizationModal').then(m => ({ default: m.AboutOrganizationModal })));
 const LegalPoliciesModal = lazy(() => import('./components/LegalPoliciesModal').then(m => ({ default: m.LegalPoliciesModal })));
+const DataPrincipalRightsModal = lazy(() => import('./components/DataPrincipalRightsModal').then(m => ({ default: m.DataPrincipalRightsModal })));
 
 const ModalLoadingFallback = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
@@ -163,6 +165,7 @@ export default function App() {
   const [selectedCertForDetail, setSelectedCertForDetail] = useState<string | undefined>(undefined);
   const [isLegalPoliciesOpen, setIsLegalPoliciesOpen] = useState<boolean>(false);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string>('privacy-policy');
+  const [isRightsCenterOpen, setIsRightsCenterOpen] = useState<boolean>(false);
 
   // Initialize native Capacitor & mobile runtime features (status bar, splash screen, hardware back button)
   useEffect(() => {
@@ -628,6 +631,7 @@ export default function App() {
                 if (policyId) setSelectedPolicyId(policyId);
                 setIsLegalPoliciesOpen(true);
               }}
+              onOpenRightsCenter={() => setIsRightsCenterOpen(true)}
             />
           )}
 
@@ -677,6 +681,7 @@ export default function App() {
               onOpenAboutOrg={() => setIsAboutOrgOpen(true)}
               onOpenTaxCert={() => setIsTaxCertModalOpen(true)}
               onOpenCorporateCSR={() => setIsCSRModalOpen(true)}
+              onOpenRightsCenter={() => setIsRightsCenterOpen(true)}
             />
           )}
 
@@ -774,6 +779,10 @@ export default function App() {
             onOpenWebhooks={() => {
               setIsSettingsOpen(false);
               setIsWebhooksModalOpen(true);
+            }}
+            onOpenRightsCenter={() => {
+              setIsSettingsOpen(false);
+              setIsRightsCenterOpen(true);
             }}
           />
         )}
@@ -973,7 +982,31 @@ export default function App() {
             initialPolicyId={selectedPolicyId}
           />
         )}
+
+        {/* Statutory DPDP Act 2023 Data Principal Rights Center Modal */}
+        {isRightsCenterOpen && (
+          <DataPrincipalRightsModal
+            isOpen={isRightsCenterOpen}
+            onClose={() => setIsRightsCenterOpen(false)}
+            currentUser={user}
+            donations={donations}
+            onOpenLegalPolicies={(policyId) => {
+              setIsRightsCenterOpen(false);
+              if (policyId) setSelectedPolicyId(policyId);
+              setIsLegalPoliciesOpen(true);
+            }}
+          />
+        )}
       </Suspense>
+
+      {/* Statutory DPDP Act 2023 Consent & Privacy Preference Notice Banner */}
+      <DpdpConsentBanner
+        onOpenLegalPolicies={(policyId) => {
+          if (policyId) setSelectedPolicyId(policyId);
+          setIsLegalPoliciesOpen(true);
+        }}
+        onOpenRightsCenter={() => setIsRightsCenterOpen(true)}
+      />
       </DeviceFrame>
     </AuthProvider>
   );

@@ -123,6 +123,7 @@ export const VolunteerScreen: React.FC<VolunteerScreenProps> = ({
   const [location, setLocation] = useState<string>('');
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
   const [volunteerId, setVolunteerId] = useState<string>('');
+  const [dpdpVolunteerConsent, setDpdpVolunteerConsent] = useState<boolean>(false);
   
   // Volunteer Drives signup state
   const [drives, setDrives] = useState<VolunteerDrive[]>(UPCOMING_DRIVES);
@@ -841,13 +842,35 @@ export const VolunteerScreen: React.FC<VolunteerScreenProps> = ({
             />
           </div>
 
+          {/* DPDP Act 2023 Statutory Consent (Section 5 & 6) */}
+          <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-1.5 text-xs">
+            <span className="font-mono text-[10px] font-bold uppercase text-emerald-800 tracking-wider flex items-center gap-1">
+              <span>DPDP Act 2023 • Volunteer Data Notice</span>
+            </span>
+            <p className="text-[11px] text-gray-700 leading-relaxed">
+              Your contact details and skills are processed strictly for volunteer onboarding, squad field coordination, emergency contact safety, and safeguarding compliance under the POCSO Act 2012. You have the right to withdraw consent and request de-registration under Section 12 of the DPDP Act 2023.
+            </p>
+            <label className="flex items-start gap-2 pt-1 cursor-pointer">
+              <input
+                type="checkbox"
+                id="vol-dpdp-consent-checkbox"
+                checked={dpdpVolunteerConsent}
+                onChange={(e) => setDpdpVolunteerConsent(e.target.checked)}
+                className="mt-0.5 rounded text-orange-600 focus:ring-orange-500 accent-orange-600 cursor-pointer"
+              />
+              <span className="text-[11px] font-semibold text-gray-900 leading-snug">
+                I give free, specific, and unambiguous consent under Section 6 of the DPDP Act 2023 for processing my registration and participating in field relief. *
+              </span>
+            </label>
+          </div>
+
           {/* Submit Application Button */}
           <div className="pt-2">
             <button
               type="submit"
               id="submit-volunteer-application-btn"
-              disabled={!name || !email}
-              className="w-full bg-orange-600 hover:bg-orange-700 active:scale-98 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-xs uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-2"
+              disabled={!name || !email || !dpdpVolunteerConsent}
+              className="w-full bg-orange-600 hover:bg-orange-700 active:scale-98 disabled:opacity-50 text-white font-bold py-3.5 rounded-2xl text-xs uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
             >
               <span>Submit Volunteer Application</span>
             </button>

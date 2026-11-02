@@ -91,13 +91,14 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
   );
 
   // Step 3: Donor & Tax Profile
-  const [donorName, setDonorName] = useState<string>(defaultName || 'Alex Johnson');
-  const [donorEmail, setDonorEmail] = useState<string>(defaultEmail || 'alex.johnson@example.com');
-  const [donorPhone, setDonorPhone] = useState<string>('+91 98765 43210');
-  const [donorPan, setDonorPan] = useState<string>('ABCDE1234F');
-  const [donorAddress, setDonorAddress] = useState<string>('Civil Lines, Ludhiana, Punjab');
-  const [donorPincode, setDonorPincode] = useState<string>('141001');
+  const [donorName, setDonorName] = useState<string>(defaultName || '');
+  const [donorEmail, setDonorEmail] = useState<string>(defaultEmail || '');
+  const [donorPhone, setDonorPhone] = useState<string>('');
+  const [donorPan, setDonorPan] = useState<string>('');
+  const [donorAddress, setDonorAddress] = useState<string>('');
+  const [donorPincode, setDonorPincode] = useState<string>('');
   const [citizenship, setCitizenship] = useState<'indian' | 'nri' | 'international'>('indian');
+  const [dpdpConsentAgreed, setDpdpConsentAgreed] = useState<boolean>(false);
 
   // Step 4: Payment Method & Details
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>('qr');
@@ -801,7 +802,7 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
                   type="text"
                   value={donorName}
                   onChange={(e) => setDonorName(e.target.value)}
-                  placeholder="e.g. Alex Johnson"
+                  placeholder="e.g. Ananya Sharma"
                   className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-bold focus:outline-hidden focus:ring-2 focus:ring-orange-500/20"
                 />
               </div>
@@ -815,7 +816,7 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
                     type="email"
                     value={donorEmail}
                     onChange={(e) => setDonorEmail(e.target.value)}
-                    placeholder="alex@example.com"
+                    placeholder="ananya.sharma@gmail.com"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-medium focus:outline-hidden focus:ring-2 focus:ring-orange-500/20"
                   />
                 </div>
@@ -842,7 +843,7 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
                     type="text"
                     value={donorPan}
                     onChange={(e) => setDonorPan(e.target.value.toUpperCase())}
-                    placeholder="e.g. ABCDE1234F"
+                    placeholder="e.g. ASPRT1234F"
                     className="w-full p-3 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl text-xs font-mono font-bold uppercase focus:outline-hidden focus:ring-2 focus:ring-orange-500/20"
                   />
                 </div>
@@ -875,12 +876,37 @@ export const DonateScreen: React.FC<DonateScreenProps> = ({
                 </div>
               </div>
             </div>
+
+            {/* DPDP Act 2023 Statutory Notice & Consent (Section 5 & 6) */}
+            <div className="p-3.5 bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/80 rounded-2xl space-y-2">
+              <div className="flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                  Digital Personal Data Protection Act, 2023 • Statutory Notice
+                </span>
+              </div>
+              <p className="text-[11px] text-gray-700 dark:text-zinc-300 leading-relaxed">
+                Your personal details (Name, Contact, PAN, Contribution amount) are collected strictly as a Data Fiduciary for the purpose of issuing a valid Section 80G tax receipt, filing Form 10BD/10BE with the Income Tax Department, and delivering instant receipts. As required by Section 80G(5)(vi) and Rule 18AB, financial tax records are retained for mandatory 7 financial years.
+              </p>
+              <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
+                <input
+                  type="checkbox"
+                  id="dpdp-donor-consent-checkbox"
+                  checked={dpdpConsentAgreed}
+                  onChange={(e) => setDpdpConsentAgreed(e.target.checked)}
+                  className="mt-0.5 rounded text-orange-600 focus:ring-orange-500 accent-orange-600 cursor-pointer"
+                />
+                <span className="text-[11px] font-semibold text-gray-900 dark:text-white leading-snug">
+                  I give free, informed, specific, and unambiguous consent under Section 6 of the DPDP Act 2023 for processing my details for 80G tax exemption and receipt delivery. *
+                </span>
+              </label>
+            </div>
           </section>
 
           {/* Continue Button */}
           <button
             onClick={() => setCurrentStep('payment')}
-            disabled={!donorName.trim() || !donorEmail.trim()}
+            disabled={!donorName.trim() || !donorEmail.trim() || !dpdpConsentAgreed}
             className="w-full bg-orange-600 hover:bg-orange-700 text-white font-black py-4 rounded-2xl text-xs uppercase tracking-widest shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 disabled:opacity-50"
           >
             <span>Proceed to Secure Payment</span>
