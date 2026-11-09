@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { UserProfile } from '../types';
-import { X, User, DollarSign, Globe, ExternalLink, Check, MessageSquare, Sun, Moon, Monitor, SunMedium, MoonStar, Eye, Smartphone, Scale, ShieldCheck, RotateCcw } from 'lucide-react';
+import { UserProfile, DonationRecord } from '../types';
+import { X, User, DollarSign, Globe, ExternalLink, Check, MessageSquare, Sun, Moon, Monitor, SunMedium, MoonStar, Eye, Smartphone, Scale, ShieldCheck, RotateCcw, Trash2 } from 'lucide-react';
 import { LanguageSelector } from './LanguageSelector';
 import { useTranslation } from '../i18n/I18nContext';
 import { useTheme, ThemeMode } from '../context/ThemeContext';
 import { getStoredDonorPreferences, saveDonorPreferences } from '../services/webhookService';
+import { DataDeletionConfirmModal } from './DataDeletionConfirmModal';
 
 interface SettingsModalProps {
   user: UserProfile;
@@ -12,6 +13,9 @@ interface SettingsModalProps {
   onClose: () => void;
   onOpenWebhooks?: () => void;
   onOpenRightsCenter?: () => void;
+  onOpenDataDeletion?: () => void;
+  donations?: DonationRecord[];
+  onLogout?: () => void;
 }
 
 export const SettingsModal: React.FC<SettingsModalProps> = ({
@@ -19,7 +23,10 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onUpdateUser,
   onClose,
   onOpenWebhooks,
-  onOpenRightsCenter
+  onOpenRightsCenter,
+  onOpenDataDeletion,
+  donations = [],
+  onLogout
 }) => {
   const { t } = useTranslation();
   const { theme, actualTheme, isDark, setTheme, toggleTheme } = useTheme();
@@ -31,6 +38,7 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   const [donorPrefs, setDonorPrefs] = useState(() => getStoredDonorPreferences());
   const [saved, setSaved] = useState(false);
   const [consentResetMsg, setConsentResetMsg] = useState(false);
+  const [isDeletionConfirmOpen, setIsDeletionConfirmOpen] = useState(false);
 
   const handleResetConsent = () => {
     try {
@@ -373,6 +381,25 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
               </button>
             </div>
 
+            {user.role !== 'guest' && (
+              <button
+                type="button"
+                id="settings-request-deletion-btn"
+                onClick={() => {
+                  if (onOpenDataDeletion) {
+                    onClose();
+                    onOpenDataDeletion();
+                  } else {
+                    setIsDeletionConfirmOpen(true);
+                  }
+                }}
+                className="w-full mt-2 p-2.5 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 border border-rose-300 dark:border-rose-900/80 text-rose-700 dark:text-rose-300 font-bold text-[11px] flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
+                <span>Request Data Deletion (Right to Erasure)</span>
+              </button>
+            )}
+
             {consentResetMsg && (
               <p className="text-[10px] text-emerald-700 dark:text-emerald-400 font-medium text-center animate-fadeIn">
                 Consent tokens cleared. Statutory cookie & privacy preferences will re-prompt.
@@ -413,6 +440,23 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
             </button>
           </div>
         </form>
+
+        {/* DPDP Act Section 12 Data Deletion Confirmation Flow */}
+        {isDeletionConfirmOpen && (
+          <DataDeletionConfirmModal
+            isOpen={isDeletionConfirmOpen}
+            onClose={() => setIsDeletionConfirmOpen(false)}
+            user={user}
+            donations={donations}
+            onDeletionInitiated={() => {
+              setIsDeletionConfirmOpen(false);
+              onClose();
+              if (onLogout) {
+                onLogout();
+              }
+            }}
+          />
+        )}
       </div>
     </div>
   );

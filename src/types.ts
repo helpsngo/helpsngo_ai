@@ -99,6 +99,24 @@ export interface VolunteerApplication {
   assignedSquad?: string;
 }
 
+export interface DpdpErasureRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  userPhone?: string;
+  userRole: UserRole;
+  requestedAt: string;
+  status: 'pending' | 'approved_deleted' | 'rejected';
+  reason: string;
+  wipeLocalConfirmed: boolean;
+  has80GDonations?: boolean;
+  statutoryAuditRetentionNotice?: string;
+  adminReviewNotes?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+}
+
 export interface LegalPolicySection {
   id: string;
   title: string;
@@ -309,7 +327,11 @@ export interface AuditLogEntry {
     | 'LOGOUT'
     | 'USER_REGISTERED'
     | 'PASSWORD_RESET'
-    | 'WHATSAPP_AUTH';
+    | 'WHATSAPP_AUTH'
+    | 'ACCOUNT_DELETED'
+    | 'DATA_DELETION_REQUESTED'
+    | 'DPDP_ERASURE_EXECUTED'
+    | 'DPDP_ERASURE_REJECTED';
   entityType: 'project' | 'story' | 'dispatch' | 'task' | 'batch' | 'media' | 'donation' | 'user' | 'system' | 'report' | 'announcement' | 'certificate' | 'policy' | 'safeguarding';
   entityId: string;
   entityTitle: string;

@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { UserProfile, DonationRecord } from '../types';
 import { ORGANIZATION_INFO } from '../data/mockData';
+import { dpdpService } from '../services/dpdpService';
 
 interface DataPrincipalRightsModalProps {
   isOpen: boolean;
@@ -54,6 +55,7 @@ export const DataPrincipalRightsModal: React.FC<DataPrincipalRightsModalProps> =
   const [erasureConfirmed, setErasureConfirmed] = useState<boolean>(false);
   const [erasureReason, setErasureReason] = useState<string>('Account Closure');
   const [erasureSubmitted, setErasureSubmitted] = useState<boolean>(false);
+  const [erasureTicketId, setErasureTicketId] = useState<string | null>(null);
 
   // Form states for Nomination (Sec 14)
   const [nomineeName, setNomineeName] = useState<string>('');
@@ -418,7 +420,7 @@ export const DataPrincipalRightsModal: React.FC<DataPrincipalRightsModalProps> =
                     Statutory Erasure Ticket Issued
                   </h4>
                   <p className="text-xs text-emerald-800 dark:text-emerald-300 max-w-md mx-auto">
-                    Your erasure request has been queued under Ticket <strong>DPDP-ERA-{Math.floor(10000 + Math.random() * 90000)}</strong>. Non-statutory tokens, preferences, and session data have been cleared.
+                    Your erasure request has been queued under Ticket <strong>{erasureTicketId || 'DPDP-ERA-2026-CONFIRMED'}</strong>. All device-local data has been wiped. Permanent account purge has been routed to the <strong>National Admin</strong> desk as required by the DPDP Act 2023.
                   </p>
                 </div>
               ) : (
@@ -446,16 +448,20 @@ export const DataPrincipalRightsModal: React.FC<DataPrincipalRightsModalProps> =
                       className="mt-0.5 rounded text-rose-600 focus:ring-rose-500"
                     />
                     <span className="text-[11px] text-gray-700 dark:text-zinc-300 leading-snug">
-                      I understand that submitting this statutory notice revokes active volunteer status and deletes non-statutory records, while statutory 80G tax audit files are retained as required by the Income Tax Department.
+                      I understand that submitting this statutory notice revokes active volunteer status, wipes my local device data, and queues account deletion for National Admin execution. 80G tax audit files are retained for 7 years under Income Tax Rule 18AB.
                     </span>
                   </label>
 
                   <button
                     disabled={!erasureConfirmed}
-                    onClick={() => setErasureSubmitted(true)}
+                    onClick={() => {
+                      const req = dpdpService.submitErasureRequest(currentUser, erasureReason, true, donations);
+                      setErasureTicketId(req.id);
+                      setErasureSubmitted(true);
+                    }}
                     className="w-full py-3 bg-rose-600 hover:bg-rose-700 disabled:opacity-50 text-white font-bold rounded-xl text-xs uppercase tracking-wider shadow-xs transition-all cursor-pointer"
                   >
-                    Execute Statutory Erasure Request
+                    Wipe Local Data & Submit Erasure Request
                   </button>
                 </div>
               )}

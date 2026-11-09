@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, UserRole, VolunteerApplication, Permission } from '../types';
+import { UserProfile, UserRole, VolunteerApplication, Permission, DpdpErasureRequest } from '../types';
 import { authService } from '../services/authService';
+import { dpdpService } from '../services/dpdpService';
 import { 
   getStoredVolunteerApplications, 
   reviewVolunteerApplication, 
@@ -33,7 +34,9 @@ import {
   Check,
   Ban,
   HelpCircle,
-  FileText
+  FileText,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 
 interface AdminUserManagementModalProps {
@@ -49,12 +52,14 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
   currentUser,
   onUserUpdated
 }) => {
-  const [activeTab, setActiveTab] = useState<'directory' | 'applicants'>('directory');
+  const [activeTab, setActiveTab] = useState<'directory' | 'applicants' | 'erasure'>('directory');
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [applications, setApplications] = useState<VolunteerApplication[]>([]);
+  const [erasureRequests, setErasureRequests] = useState<DpdpErasureRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [applicantFilter, setApplicantFilter] = useState<string>('all');
+  const [erasureFilter, setErasureFilter] = useState<'all' | 'pending' | 'approved_deleted' | 'rejected'>('all');
   const [feedback, setFeedback] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   
   // Selected user for editing role
@@ -67,11 +72,18 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
   const [reviewNotes, setReviewNotes] = useState<string>('');
   const [assignedSquad, setAssignedSquad] = useState<string>('');
 
+  // Erasure action state
+  const [selectedErasureId, setSelectedErasureId] = useState<string | null>(null);
+  const [erasureActionNotes, setErasureActionNotes] = useState<string>('');
+  const [rejectionReason, setRejectionReason] = useState<string>('');
+
   const loadData = () => {
     const list = authService.getAllUsers();
     setUsers(list);
     const apps = getStoredVolunteerApplications();
     setApplications(apps);
+    const erasures = dpdpService.getErasureRequests();
+    setErasureRequests(erasures);
   };
 
   useEffect(() => {
@@ -80,6 +92,7 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
       setFeedback(null);
       setEditingEmail(null);
       setSelectedAppId(null);
+      setSelectedErasureId(null);
     }
   }, [isOpen]);
 
@@ -172,10 +185,59 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
     setFeedback(null);
   };
 
+  const handleApproveErasure = (reqId: string, notes?: string) => {
+    const res = dpdpService.approveAndExecuteErasure(reqId, currentUser, notes);
+    if (res.success) {
+      setFeedback({ type: 'success', text: res.message });
+      setSelectedErasureId(null);
+      loadData();
+    } else {
+      setFeedback({ type: 'error', text: res.error || res.message });
+    }
+  };
+
+  const handleRejectErasure = (reqId: string) => {
+    if (!rejectionReason.trim()) {
+      setFeedback({ type: 'error', text: 'Please provide a justification for rejecting the statutory erasure request.' });
+      return;
+    }
+    const res = dpdpService.rejectErasureRequest(reqId, currentUser, rejectionReason);
+    if (res.success) {
+      setFeedback({ type: 'success', text: res.message });
+      setSelectedErasureId(null);
+      setRejectionReason('');
+      loadData();
+    } else {
+      setFeedback({ type: 'error', text: res.error || res.message });
+    }
+  };
+
+  const handleDirectDeleteUser = (targetEmail: string, targetName: string) => {
+    const confirmed = window.confirm(
+      `Statutory Action: Are you sure you want to permanently delete user "${targetName}" (${targetEmail}) under the DPDP Act 2023?\n\nThis will permanently purge this account from the registered user directory.`
+    );
+    if (!confirmed) return;
+
+    const res = authService.deleteAccountByAdmin(targetEmail, currentUser);
+    if (res.success) {
+      setFeedback({
+        type: 'success',
+        text: `Account for ${targetName} (${targetEmail}) permanently purged under DPDP Act 2023 Section 12.`
+      });
+      loadData();
+    } else {
+      setFeedback({
+        type: 'error',
+        text: res.error || 'Failed to delete account.'
+      });
+    }
+  };
+
   // Counts
   const totalCount = users.length;
   const pendingAppsCount = applications.filter(a => a.status === 'pending_review').length;
   const verifiedAppsCount = applications.filter(a => a.status === 'verified_active').length;
+  const pendingErasureCount = erasureRequests.filter(r => r.status === 'pending').length;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-fadeIn">
@@ -210,11 +272,11 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 px-5 pt-3 border-b border-gray-200 dark:border-zinc-800 bg-purple-50/40 dark:bg-purple-950/20">
+        <div className="flex items-center gap-2 px-5 pt-3 border-b border-gray-200 dark:border-zinc-800 bg-purple-50/40 dark:bg-purple-950/20 overflow-x-auto">
           <button
             type="button"
             onClick={() => { setActiveTab('directory'); setFeedback(null); }}
-            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 whitespace-nowrap ${
               activeTab === 'directory'
                 ? 'bg-white dark:bg-zinc-900 text-purple-900 dark:text-purple-200 border-purple-600 dark:border-purple-400 shadow-xs'
                 : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
@@ -227,17 +289,35 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
           <button
             type="button"
             onClick={() => { setActiveTab('applicants'); setFeedback(null); }}
-            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 ${
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 whitespace-nowrap ${
               activeTab === 'applicants'
                 ? 'bg-white dark:bg-zinc-900 text-purple-900 dark:text-purple-200 border-purple-600 dark:border-purple-400 shadow-xs'
                 : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
             }`}
           >
             <FileCheck className="w-4 h-4 text-amber-600" />
-            <span>Volunteer Verification Queue</span>
+            <span>Volunteer Queue</span>
             {pendingAppsCount > 0 && (
               <span className="text-[10px] bg-amber-500 text-white font-extrabold px-1.5 py-0.2 rounded-full">
                 {pendingAppsCount}
+              </span>
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => { setActiveTab('erasure'); setFeedback(null); }}
+            className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all cursor-pointer flex items-center gap-2 border-b-2 whitespace-nowrap ${
+              activeTab === 'erasure'
+                ? 'bg-white dark:bg-zinc-900 text-rose-900 dark:text-rose-200 border-rose-600 dark:border-rose-400 shadow-xs'
+                : 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-900 dark:hover:text-gray-200'
+            }`}
+          >
+            <Trash2 className="w-4 h-4 text-rose-600" />
+            <span>DPDP Erasure Requests (National Admin)</span>
+            {pendingErasureCount > 0 && (
+              <span className="text-[10px] bg-rose-600 text-white font-extrabold px-1.5 py-0.2 rounded-full">
+                {pendingErasureCount}
               </span>
             )}
           </button>
@@ -404,14 +484,27 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
                       {/* Actions / Edit Button */}
                       <div className="flex items-center gap-2">
                         {!isEditing ? (
-                          <button
-                            type="button"
-                            onClick={() => startEditing(u)}
-                            className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-purple-200 dark:border-purple-800 transition-all cursor-pointer shadow-2xs"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                            <span>Modify Role</span>
-                          </button>
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => startEditing(u)}
+                              className="px-3 py-1.5 bg-purple-50 hover:bg-purple-100 dark:bg-purple-950/60 dark:hover:bg-purple-900 text-purple-700 dark:text-purple-300 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-purple-200 dark:border-purple-800 transition-all cursor-pointer shadow-2xs"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                              <span>Modify Role</span>
+                            </button>
+
+                            {u.email.toLowerCase() !== currentUser.email.toLowerCase() && (
+                              <button
+                                type="button"
+                                onClick={() => handleDirectDeleteUser(u.email, u.name)}
+                                className="p-1.5 text-gray-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors cursor-pointer"
+                                title="Delete Account (DPDP Act Sec 12)"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
                         ) : (
                           <button
                             type="button"
@@ -641,6 +734,201 @@ export const AdminUserManagementModal: React.FC<AdminUserManagementModalProps> =
                   </div>
                 );
               })
+            )}
+          </div>
+        )}
+
+        {/* TAB 3: DPDP ACT STATUTORY ERASURE REQUESTS (NATIONAL ADMIN ONLY) */}
+        {activeTab === 'erasure' && (
+          <div className="flex-1 overflow-y-auto p-5 space-y-4">
+            {/* Filter Bar */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-rose-50/50 dark:bg-rose-950/20 rounded-2xl border border-rose-200 dark:border-rose-900/50">
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mr-1">Status:</span>
+                {[
+                  { id: 'all', label: `All (${erasureRequests.length})` },
+                  { id: 'pending', label: `Pending (${erasureRequests.filter(r => r.status === 'pending').length})` },
+                  { id: 'approved_deleted', label: `Purged (${erasureRequests.filter(r => r.status === 'approved_deleted').length})` },
+                  { id: 'rejected', label: `Rejected (${erasureRequests.filter(r => r.status === 'rejected').length})` }
+                ].map((f) => (
+                  <button
+                    key={f.id}
+                    type="button"
+                    onClick={() => setErasureFilter(f.id as any)}
+                    className={`px-3 py-1 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                      erasureFilter === f.id
+                        ? 'bg-rose-600 text-white shadow-xs'
+                        : 'bg-white dark:bg-zinc-800 text-gray-700 dark:text-zinc-300 border border-gray-200 dark:border-zinc-700 hover:border-rose-400'
+                    }`}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono bg-rose-100 dark:bg-rose-950/80 text-rose-800 dark:text-rose-200 px-2 py-0.5 rounded border border-rose-300 dark:border-rose-800 font-bold">
+                  National Admin Authority
+                </span>
+              </div>
+            </div>
+
+            {/* Requests List */}
+            {erasureRequests.filter(r => {
+              if (erasureFilter !== 'all' && r.status !== erasureFilter) return false;
+              if (searchTerm.trim()) {
+                const q = searchTerm.toLowerCase();
+                return r.userName.toLowerCase().includes(q) || r.userEmail.toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+              }
+              return true;
+            }).length === 0 ? (
+              <div className="py-12 text-center space-y-2">
+                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                <h4 className="font-bold text-sm text-gray-900 dark:text-white">No Erasure Requests in Queue</h4>
+                <p className="text-xs text-gray-500 max-w-sm mx-auto">
+                  All statutory data erasure requests under DPDP Act 2023 Section 12 have been reviewed and processed by the National Admin.
+                </p>
+              </div>
+            ) : (
+              erasureRequests
+                .filter(r => {
+                  if (erasureFilter !== 'all' && r.status !== erasureFilter) return false;
+                  if (searchTerm.trim()) {
+                    const q = searchTerm.toLowerCase();
+                    return r.userName.toLowerCase().includes(q) || r.userEmail.toLowerCase().includes(q) || r.id.toLowerCase().includes(q);
+                  }
+                  return true;
+                })
+                .map((req) => {
+                  const isPending = req.status === 'pending';
+                  const isPurged = req.status === 'approved_deleted';
+                  const isRejected = req.status === 'rejected';
+
+                  return (
+                    <div
+                      key={req.id}
+                      className={`p-4 rounded-2xl border transition-all ${
+                        isPending
+                          ? 'bg-rose-50/40 dark:bg-rose-950/20 border-rose-200 dark:border-rose-900/60 shadow-xs'
+                          : isPurged
+                          ? 'bg-emerald-50/30 dark:bg-emerald-950/10 border-emerald-200 dark:border-emerald-900/40 opacity-90'
+                          : 'bg-gray-50 dark:bg-zinc-800/40 border-gray-200 dark:border-zinc-700 opacity-80'
+                      }`}
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-gray-200 dark:border-zinc-700/60">
+                        <div className="flex items-center gap-2.5">
+                          <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-white shadow-xs ${
+                            isPending ? 'bg-rose-600' : isPurged ? 'bg-emerald-600' : 'bg-gray-600'
+                          }`}>
+                            <Trash2 className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-black text-sm text-gray-900 dark:text-white">{req.userName}</h4>
+                              <span className="font-mono text-[10px] bg-white dark:bg-zinc-800 px-1.5 py-0.2 rounded border border-gray-200 dark:border-zinc-700 text-gray-600 dark:text-zinc-300 font-bold">
+                                {req.userRole.replace('_', ' ').toUpperCase()}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-gray-500 font-mono mt-0.5">{req.userEmail} {req.userPhone ? `• ${req.userPhone}` : ''}</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 self-start sm:self-auto">
+                          <span className="font-mono text-[10px] text-gray-500">
+                            {new Date(req.requestedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                          </span>
+                          <span className={`text-[10px] font-extrabold uppercase tracking-wider px-2 py-0.5 rounded-full border ${
+                            isPending
+                              ? 'bg-rose-100 text-rose-800 dark:bg-rose-900/80 dark:text-rose-200 border-rose-300'
+                              : isPurged
+                              ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/80 dark:text-emerald-200 border-emerald-300'
+                              : 'bg-gray-200 text-gray-800 dark:bg-zinc-700 dark:text-zinc-300 border-gray-300'
+                          }`}>
+                            {isPending ? 'Pending National Admin Action' : isPurged ? 'Permanently Purged' : 'Rejected'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Request Details */}
+                      <div className="pt-3 space-y-2 text-xs">
+                        <div className="flex items-start gap-2">
+                          <span className="font-bold text-gray-700 dark:text-zinc-300 min-w-[90px]">Ticket ID:</span>
+                          <span className="font-mono font-bold text-rose-600 dark:text-rose-400">{req.id}</span>
+                        </div>
+
+                        <div className="flex items-start gap-2">
+                          <span className="font-bold text-gray-700 dark:text-zinc-300 min-w-[90px]">User Stated Reason:</span>
+                          <span className="text-gray-800 dark:text-zinc-200">{req.reason}</span>
+                        </div>
+
+                        {/* Statutory Retention Analysis */}
+                        <div className="p-2.5 rounded-xl bg-white dark:bg-zinc-800/80 border border-gray-200 dark:border-zinc-700 flex items-start gap-2">
+                          <AlertTriangle className={`w-4 h-4 shrink-0 mt-0.5 ${req.has80GDonations ? 'text-amber-600' : 'text-emerald-600'}`} />
+                          <div className="text-[11px] leading-relaxed">
+                            <span className="font-bold block text-gray-900 dark:text-white">
+                              {req.has80GDonations 
+                                ? 'Income Tax Act Rule 18AB / Section 80G Active' 
+                                : 'Zero Financial Audit Constraints (Clean Purge)'}
+                            </span>
+                            <span className="text-gray-600 dark:text-zinc-400">
+                              {req.statutoryAuditRetentionNotice}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Reviewer Details for completed or rejected */}
+                        {!isPending && req.reviewedBy && (
+                          <div className="pt-2 border-t border-gray-200 dark:border-zinc-700 text-[11px] text-gray-500 space-y-1">
+                            <p><strong>Authorized By:</strong> {req.reviewedBy} on {new Date(req.reviewedAt || '').toLocaleString('en-IN')}</p>
+                            {req.adminReviewNotes && <p><strong>Statutory Audit Notes:</strong> {req.adminReviewNotes}</p>}
+                          </div>
+                        )}
+
+                        {/* Admin Action Bar (Only for Pending requests) */}
+                        {isPending && (
+                          <div className="pt-3 border-t border-rose-200 dark:border-rose-900/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                            <div className="flex-1">
+                              <input
+                                type="text"
+                                placeholder="Optional Admin audit notes (e.g. Verified by National Director Amarjeet Kumar)"
+                                value={selectedErasureId === req.id ? erasureActionNotes : ''}
+                                onChange={(e) => {
+                                  setSelectedErasureId(req.id);
+                                  setErasureActionNotes(e.target.value);
+                                }}
+                                className="w-full px-3 py-1.5 bg-white dark:bg-zinc-900 border border-gray-300 dark:border-zinc-700 rounded-xl text-xs"
+                              />
+                            </div>
+
+                            <div className="flex items-center gap-2 self-end sm:self-auto">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const reasonPrompt = window.prompt(`Please provide statutory justification for rejecting request ${req.id}:`, 'Request could not be authenticated with registered phone/ID');
+                                  if (reasonPrompt && reasonPrompt.trim()) {
+                                    handleRejectErasure(req.id);
+                                  }
+                                }}
+                                className="px-3 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-zinc-800 text-gray-800 dark:text-zinc-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
+                              >
+                                Reject
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleApproveErasure(req.id, selectedErasureId === req.id ? erasureActionNotes : undefined)}
+                                className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-extrabold uppercase tracking-wider transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                                <span>Approve & Permanently Delete</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })
             )}
           </div>
         )}

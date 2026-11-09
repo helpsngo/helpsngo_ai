@@ -58,6 +58,7 @@ const AdminUserManagementModal = lazy(() => import('./components/AdminUserManage
 const AboutOrganizationModal = lazy(() => import('./components/AboutOrganizationModal').then(m => ({ default: m.AboutOrganizationModal })));
 const LegalPoliciesModal = lazy(() => import('./components/LegalPoliciesModal').then(m => ({ default: m.LegalPoliciesModal })));
 const DataPrincipalRightsModal = lazy(() => import('./components/DataPrincipalRightsModal').then(m => ({ default: m.DataPrincipalRightsModal })));
+const DataDeletionConfirmModal = lazy(() => import('./components/DataDeletionConfirmModal').then(m => ({ default: m.DataDeletionConfirmModal })));
 
 const ModalLoadingFallback = () => (
   <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-xs animate-fadeIn">
@@ -166,6 +167,7 @@ export default function App() {
   const [isLegalPoliciesOpen, setIsLegalPoliciesOpen] = useState<boolean>(false);
   const [selectedPolicyId, setSelectedPolicyId] = useState<string>('privacy-policy');
   const [isRightsCenterOpen, setIsRightsCenterOpen] = useState<boolean>(false);
+  const [isDeletionConfirmOpen, setIsDeletionConfirmOpen] = useState<boolean>(false);
 
   // Initialize native Capacitor & mobile runtime features (status bar, splash screen, hardware back button)
   useEffect(() => {
@@ -682,6 +684,7 @@ export default function App() {
               onOpenTaxCert={() => setIsTaxCertModalOpen(true)}
               onOpenCorporateCSR={() => setIsCSRModalOpen(true)}
               onOpenRightsCenter={() => setIsRightsCenterOpen(true)}
+              onOpenDataDeletion={() => setIsDeletionConfirmOpen(true)}
             />
           )}
 
@@ -784,6 +787,12 @@ export default function App() {
               setIsSettingsOpen(false);
               setIsRightsCenterOpen(true);
             }}
+            onOpenDataDeletion={() => {
+              setIsSettingsOpen(false);
+              setIsDeletionConfirmOpen(true);
+            }}
+            donations={donations}
+            onLogout={handleLogout}
           />
         )}
 
@@ -994,6 +1003,20 @@ export default function App() {
               setIsRightsCenterOpen(false);
               if (policyId) setSelectedPolicyId(policyId);
               setIsLegalPoliciesOpen(true);
+            }}
+          />
+        )}
+
+        {/* Statutory DPDP Act 2023 Data Deletion & Local Data Wipe Modal */}
+        {isDeletionConfirmOpen && (
+          <DataDeletionConfirmModal
+            isOpen={isDeletionConfirmOpen}
+            onClose={() => setIsDeletionConfirmOpen(false)}
+            user={user}
+            donations={donations}
+            onDeletionInitiated={() => {
+              handleLogout();
+              setIsDeletionConfirmOpen(false);
             }}
           />
         )}

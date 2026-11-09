@@ -26,7 +26,8 @@ import {
   Building2,
   FileText,
   Smartphone,
-  Scale
+  Scale,
+  Trash2
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -78,6 +79,7 @@ interface ProfileScreenProps {
   onOpenTaxCert?: () => void;
   onOpenCorporateCSR?: () => void;
   onOpenRightsCenter?: () => void;
+  onOpenDataDeletion?: () => void;
 }
 
 interface CustomTooltipProps {
@@ -130,6 +132,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   onOpenTaxCert,
   onOpenCorporateCSR,
   onOpenRightsCenter,
+  onOpenDataDeletion,
   onSelectUser
 }) => {
   const [showAllHistory, setShowAllHistory] = useState<boolean>(false);
@@ -1233,34 +1236,55 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
       {/* DPDP Act 2023: Data Principal Rights & Statutory Privacy Card */}
       {onOpenRightsCenter && (
-        <div 
-          onClick={onOpenRightsCenter}
-          className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/40 dark:to-teal-950/20 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between hover:border-emerald-400 transition-all cursor-pointer shadow-xs group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
-              <Scale className="w-5 h-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded font-mono">
-                  DPDP Act 2023
-                </span>
-                <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">Statutory Privacy</span>
+        <div className="space-y-2">
+          <div 
+            onClick={onOpenRightsCenter}
+            className="p-4 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50 to-emerald-50 dark:from-emerald-950/40 dark:to-teal-950/20 border border-emerald-200 dark:border-emerald-800/80 flex items-center justify-between hover:border-emerald-400 transition-all cursor-pointer shadow-xs group"
+          >
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-600 text-white flex items-center justify-center font-bold flex-shrink-0 group-hover:scale-105 transition-transform shadow-sm">
+                <Scale className="w-5 h-5" />
               </div>
-              <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                Data Principal Rights & Privacy Center
-              </h4>
-              <p className="text-[10px] text-gray-500 dark:text-zinc-400">
-                Exercise your statutory rights: Access Summary (Sec 11), Correction, Erasure & DPO Desk
-              </p>
+              <div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider bg-emerald-200/80 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200 px-1.5 py-0.2 rounded font-mono">
+                    DPDP Act 2023
+                  </span>
+                  <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-bold">Statutory Privacy</span>
+                </div>
+                <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                  Data Principal Rights & Privacy Center
+                </h4>
+                <p className="text-[10px] text-gray-500 dark:text-zinc-400">
+                  Exercise your statutory rights: Access Summary (Sec 11), Correction, Erasure & DPO Desk
+                </p>
+              </div>
             </div>
+
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
+              <span>Manage</span>
+              <ChevronRight className="w-4 h-4" />
+            </span>
           </div>
 
-          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1 group-hover:translate-x-0.5 transition-transform">
-            <span>Manage</span>
-            <ChevronRight className="w-4 h-4" />
-          </span>
+          {!isGuest && onOpenDataDeletion && (
+            <div className="p-3 bg-rose-50/60 dark:bg-rose-950/20 border border-rose-200 dark:border-rose-900/50 rounded-2xl flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Trash2 className="w-4 h-4 text-rose-600 dark:text-rose-400 shrink-0" />
+                <span className="text-[11px] text-gray-700 dark:text-zinc-300">
+                  Right to Erasure (Sec 12): Wipe local data & request deletion
+                </span>
+              </div>
+              <button
+                type="button"
+                id="profile-request-deletion-btn"
+                onClick={onOpenDataDeletion}
+                className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[10px] uppercase tracking-wider rounded-xl transition-all shadow-xs cursor-pointer whitespace-nowrap"
+              >
+                Request Data Deletion
+              </button>
+            </div>
+          )}
         </div>
       )}
 

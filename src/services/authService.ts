@@ -658,6 +658,48 @@ class AuthService {
     };
   }
 
+  // Permanent Account Erasure (Authorized ONLY for National Admin under DPDP Act 2023)
+  public deleteAccountByAdmin(targetEmail: string, adminUser: UserProfile): { success: boolean; error?: string } {
+    if (adminUser.role !== 'admin' && adminUser.role !== 'super_admin') {
+      return {
+        success: false,
+        error: 'Permission Denied: Only National Admin can permanently delete user accounts under DPDP Act 2023.'
+      };
+    }
+
+    const cleanEmail = (targetEmail || '').trim().toLowerCase();
+    const existing = this.getRegisteredAccounts();
+    const target = existing.find(a => a.email.toLowerCase() === cleanEmail);
+
+    if (!target) {
+      return { success: false, error: `Account with email "${cleanEmail}" was not found.` };
+    }
+
+    const updated = existing.filter(a => a.email.toLowerCase() !== cleanEmail);
+    try {
+      localStorage.setItem(STORAGE_USERS_KEY, JSON.stringify(updated));
+    } catch {
+      // quiet catch
+    }
+
+    if (this.activeSessionUser.email.toLowerCase() === cleanEmail) {
+      this.signOut();
+    }
+
+    appendAuditLog(
+      'ACCOUNT_DELETED',
+      adminUser,
+      'user',
+      cleanEmail,
+      target.userProfile.name,
+      `National Admin ${adminUser.name} executed statutory DPDP account erasure for ${target.userProfile.name} (${cleanEmail})`,
+      'Active Registered Account',
+      'Permanently Erased / Purged'
+    );
+
+    return { success: true };
+  }
+
   // Retrieve All Registered Users
   public getAllUsers(): UserProfile[] {
     const accounts = this.getRegisteredAccounts();
